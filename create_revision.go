@@ -13,13 +13,17 @@ func CreateRevision(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("imageフラグの取得に失敗しました: %w", err)
 	}
+
 	if image == "" {
 		return fmt.Errorf("imageフラグが指定されていません")
 	}
-	return createRevision(cmd, image)
+
+	commitHash := getCommitHash(cmd)
+
+	return createRevision(cmd, image, commitHash)
 }
 
-func createRevision(cmd *cobra.Command, image string) error {
+func createRevision(cmd *cobra.Command, image string, commitHash string) error {
 	// コンテキストを取得
 	ctx := cmd.Context()
 
@@ -31,6 +35,10 @@ func createRevision(cmd *cobra.Command, image string) error {
 		"--region", config.Region,
 		"--no-traffic", // 重要: 新しいリビジョンにトラフィックを流さない
 	)
+
+	if commitHash != "" {
+		gcloudCmd.Args = append(gcloudCmd.Args, "--revision-suffix", commitHash)
+	}
 
 	gcloudCmd.Stdout = os.Stdout
 	gcloudCmd.Stderr = os.Stderr

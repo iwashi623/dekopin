@@ -1,0 +1,4 @@
+project: deal-development
+region: asia-northeast1
+service: deal-api-container
+runner: github-actions

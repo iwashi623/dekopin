@@ -1,6 +1,6 @@
 module github.com/iwashi623/dekopin
 
-go 1.24
+go 1.23
 
 require (
 	cloud.google.com/go/run v1.9.2

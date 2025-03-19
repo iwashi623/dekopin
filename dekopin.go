@@ -6,34 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
-
-var config DekopinConfig
-
-func setConfig(cmd *cobra.Command) error {
-	fileName, err := cmd.Flags().GetString("file")
-	if err != nil {
-		return fmt.Errorf("ファイル名の取得に失敗しました: %w", err)
-	}
-
-	dekopinYaml, err := os.ReadFile(fileName)
-	if err != nil {
-		return fmt.Errorf("ファイルの読み込みに失敗しました: %w", err)
-	}
-
-	if err := yaml.Unmarshal(dekopinYaml, &config); err != nil {
-		return fmt.Errorf("ファイルのパースに失敗しました: %w", err)
-	}
-
-	return nil
-}
-
-type DekopinConfig struct {
-	Project string `yaml:"project"`
-	Region  string `yaml:"region"`
-	Service string `yaml:"service"`
-}
 
 func Run(ctx context.Context) (int, error) {
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -47,7 +20,7 @@ var rootCmd = &cobra.Command{
 	Use:   "dekopin",
 	Short: "Dekopin is a Cloud Run deployment tool",
 	Long:  "Dekopin is a tool to deploy Cloud Run services with tags and traffic management.",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return setConfig(cmd)
 	},
 }
@@ -62,10 +35,7 @@ var createRevisionCmd = &cobra.Command{
 var createTagCmd = &cobra.Command{
 	Use:   "create-tag",
 	Short: "Assign a Revision tag to a Cloud Run revision",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Assigning tag to revision...")
-		// TODO: リビジョン ID とタグ名を引数・フラグから取得し、タグ付与処理を実装
-	},
+	RunE:  CreateTag,
 }
 
 var removeTagCmd = &cobra.Command{
@@ -96,17 +66,86 @@ var deployCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&config.Project, "project", "p", "", "GCPプロジェクトID")
-	rootCmd.PersistentFlags().StringVarP(&config.Region, "region", "r", "", "リージョン")
-	rootCmd.PersistentFlags().StringVarP(&config.Service, "service", "s", "", "サービス名")
-	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yaml", "設定ファイル名")
+	setRootFlags(rootCmd)
+	rootCmd.PersistentPreRunE = validateRunnerFunc
 
 	rootCmd.AddCommand(createRevisionCmd)
-	createRevisionCmd.Flags().String("image", "i", "コンテナイメージのURL")
+	createRevisionCmd.Flags().StringP("image", "i", "", "container image")
 	createRevisionCmd.MarkFlagRequired("image")
 
 	rootCmd.AddCommand(createTagCmd)
+	createTagCmd.Flags().StringP("tag", "t", "", "tag name")
+	createTagCmd.Flags().String("revision", "", "revision name")
+
 	rootCmd.AddCommand(removeTagCmd)
 	rootCmd.AddCommand(switchTrafficCmd)
 	rootCmd.AddCommand(deployCmd)
+}
+
+func setRootFlags(cmd *cobra.Command) {
+	rootCmd.PersistentFlags().StringP("project", "p", "", "GCP project id")
+	rootCmd.PersistentFlags().StringP("region", "r", "", "region")
+	rootCmd.PersistentFlags().StringP("service", "s", "", "service name")
+	rootCmd.PersistentFlags().StringP("runner", "r", "", "runner type")
+	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
+}
+
+func getCommitHash(cmd *cobra.Command) string {
+	if config.Runner == RUNNER_GITHUB_ACTIONS {
+		sha := os.Getenv(ENV_GITHUB_SHA)
+		// 先頭の7文字を取得
+		return sha[:7]
+	}
+
+	if config.Runner == RUNNER_CLOUD_BUILD {
+		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
+		// 先頭の7文字を取得
+		return sha[:7]
+	}
+
+	return ""
+}
+
+func getTagName(cmd *cobra.Command) (string, error) {
+	var tagName string
+	if config.Runner == RUNNER_GITHUB_ACTIONS {
+		tagName = os.Getenv(ENV_GITHUB_TAG)
+	}
+
+	if config.Runner == RUNNER_CLOUD_BUILD {
+		tagName = os.Getenv(ENV_CLOUD_BUILD_TAG)
+	}
+
+	if t, err := cmd.Flags().GetString("tag"); err != nil {
+		return "", fmt.Errorf("tagフラグの取得に失敗しました: %w", err)
+	} else if t != "" {
+		tagName = t
+	}
+
+	if tagName == "" {
+		return "", fmt.Errorf("tagフラグが指定されていません")
+	}
+
+	return tagName, nil
+}
+
+func getRevisionName(cmd *cobra.Command) (string, error) {
+	if rv, err := cmd.Flags().GetString("revision"); err != nil {
+		return "", fmt.Errorf("revisionフラグの取得に失敗しました: %w", err)
+	} else if rv != "" {
+		return rv, nil
+	}
+
+	if prefix := getCommitHash(cmd); prefix != "" {
+		return config.Service + "-" + prefix, nil
+	}
+
+	return "", fmt.Errorf("revisionフラグが指定されていません")
+}
+
+func validateRunner(runner string) error {
+	if !validRunners[runner] {
+		return fmt.Errorf("無効なランナータイプです。有効な値: github-actions, cloud-build, local")
+	}
+	return nil
 }
