@@ -23,15 +23,10 @@ func Run(ctx context.Context) int {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "dekopin",
-	Short: "Dekopin is a Cloud Run deployment tool",
-	Long:  "Dekopin is a tool to deploy Cloud Run services with tags and traffic management.",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := validateRunnerFunc(cmd, args); err != nil {
-			return err
-		}
-		return setConfig(cmd)
-	},
+	Use:               "dekopin",
+	Short:             "Dekopin is a Cloud Run deployment tool",
+	Long:              "Dekopin is a tool to deploy Cloud Run services with tags and traffic management.",
+	PersistentPreRunE: prepareRun,
 }
 
 var createRevisionCmd = &cobra.Command{
@@ -53,8 +48,7 @@ var removeTagCmd = &cobra.Command{
 }
 
 var deployCmd = &cobra.Command{
-	Use: "deploy",
-	// イメージを指定して新しいリビジョンを作成
+	Use:   "deploy",
 	Short: "Deploy new revision with image",
 	RunE:  DeployCommand,
 }
@@ -90,11 +84,14 @@ func init() {
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
 
 	rootCmd.AddCommand(deployCmd)
+	deployCmd.Flags().StringP("image", "i", "", "container image")
+	deployCmd.MarkFlagRequired("image")
+
 	rootCmd.AddCommand(srDeployCmd)
 	rootCmd.AddCommand(stDeployCmd)
 }
 
-func setRootFlags(cmd *cobra.Command) {
+func setRootFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("project", "", "GCP project id")
 	rootCmd.PersistentFlags().String("region", "", "region")
 	rootCmd.PersistentFlags().String("service", "", "service name")
@@ -106,7 +103,7 @@ const (
 	COMMIT_HASH_LENGTH = 7
 )
 
-func getCommitHash(cmd *cobra.Command) string {
+func getCommitHash() string {
 	if config.Runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
 		if len(sha) < COMMIT_HASH_LENGTH {
@@ -124,6 +121,26 @@ func getCommitHash(cmd *cobra.Command) string {
 	}
 
 	return ""
+}
+
+func prepareRun(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+	if err := validateRunnerFunc(cmd, args); err != nil {
+		return err
+	}
+
+	if err := setConfig(cmd); err != nil {
+		return err
+	}
+
+	cmdOption, err := NewCmdOption(&config, cmd)
+	if err != nil {
+		return err
+	}
+
+	ctx = context.WithValue(ctx, cmdOptionKey{}, cmdOption)
+	cmd.SetContext(ctx)
+	return nil
 }
 
 func getTagName(cmd *cobra.Command) (string, error) {
@@ -165,7 +182,7 @@ func getRevisionName(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("revision flag is required")
 	}
 
-	if prefix := getCommitHash(cmd); prefix != "" {
+	if prefix := getCommitHash(); prefix != "" {
 		return config.Service + "-" + prefix, nil
 	}
 
@@ -177,4 +194,58 @@ func validateRunner(runner string) error {
 		return fmt.Errorf("invalid runner type. Valid values: github-actions, cloud-build, local")
 	}
 	return nil
+}
+
+type cmdOptionKey struct{}
+
+type CmdOption struct {
+	Project string
+	Region  string
+	Service string
+	Runner  string
+}
+
+func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error) {
+	project, err := cmd.Flags().GetString("project")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get project flag: %w", err)
+	}
+	if project == "" {
+		project = config.Project
+	}
+
+	region, err := cmd.Flags().GetString("region")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get region flag: %w", err)
+	}
+	if region == "" {
+		region = config.Region
+	}
+
+	service, err := cmd.Flags().GetString("service")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service flag: %w", err)
+	}
+	if service == "" {
+		service = config.Service
+	}
+
+	runner, err := cmd.Flags().GetString("runner")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get runner flag: %w", err)
+	}
+	if runner == "" {
+		runner = config.Runner
+	}
+
+	if project == "" || region == "" || service == "" || runner == "" {
+		return nil, fmt.Errorf("project, region, service, and runner are required")
+	}
+
+	return &CmdOption{
+		Project: project,
+		Region:  region,
+		Service: service,
+		Runner:  runner,
+	}, nil
 }

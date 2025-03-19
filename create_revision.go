@@ -23,7 +23,7 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("image flag is required")
 	}
 
-	commitHash := getCommitHash(cmd)
+	commitHash := getCommitHash()
 
 	return CreateRevisionExec(ctx, gcloudCmd, image, commitHash)
 }
@@ -35,7 +35,7 @@ func CreateRevisionExec(ctx context.Context, gc GcloudCommand, image string, com
 		return fmt.Errorf("failed to create revision: %w", err)
 	}
 
-	fmt.Println("New revision has been successfully deployed")
+	fmt.Println("New revision has been successfully created")
 
 	return nil
 }
