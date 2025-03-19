@@ -3,12 +3,42 @@ package dekopin
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
+var config DekopinConfig
+
+func setConfig(ctx context.Context) error {
+	// 設定ファイルを読み込む
+	dekopinYaml, err := os.ReadFile("dekopin.yaml")
+	if err != nil {
+		return fmt.Errorf("dekopin.yamlの読み込みに失敗しました: %w", err)
+	}
+
+	// 設定ファイルをパースする
+	if err := yaml.Unmarshal(dekopinYaml, &config); err != nil {
+		return fmt.Errorf("dekopin.yamlのパースに失敗しました: %w", err)
+	}
+
+	return nil
+}
+
+type DekopinConfig struct {
+	Project string `yaml:"project"`
+	Region  string `yaml:"region"`
+	Service string `yaml:"service"`
+}
+
 func Run(ctx context.Context) (int, error) {
-	if err := rootCmd.Execute(); err != nil {
+	if err := setConfig(ctx); err != nil {
+		fmt.Println(err)
+		return 1, err
+	}
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		return 1, err
 	}
@@ -22,17 +52,14 @@ var rootCmd = &cobra.Command{
 }
 
 var createRevisionCmd = &cobra.Command{
-	Use:   "create_revision",
+	Use:   "create-revision",
 	Short: "Create a new Cloud Run revision",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Cloud Run API を呼び出してリビジョン作成処理を実装
-		fmt.Println("Creating a new revision...")
-		// TODO: ビルド、プッシュ、デプロイ処理
-	},
+	Args:  cobra.NoArgs,
+	RunE:  StartCreateRevision,
 }
 
 var createTagCmd = &cobra.Command{
-	Use:   "create_tag",
+	Use:   "create-tag",
 	Short: "Assign a tag to a Cloud Run revision",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Assigning tag to revision...")
@@ -41,7 +68,7 @@ var createTagCmd = &cobra.Command{
 }
 
 var removeTagCmd = &cobra.Command{
-	Use:   "remove_tag",
+	Use:   "remove-tag",
 	Short: "Remove a tag from a Cloud Run revision",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Removing tag from revision...")
@@ -50,7 +77,7 @@ var removeTagCmd = &cobra.Command{
 }
 
 var switchTrafficCmd = &cobra.Command{
-	Use:   "switch_traffic",
+	Use:   "switch-traffic",
 	Short: "Switch traffic to a specified Cloud Run revision",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Switching traffic...")
@@ -63,12 +90,15 @@ var deployCmd = &cobra.Command{
 	Short: "Deploy new revision with tag and traffic management",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Deploying new revision with tag management and traffic switching...")
-		// TODO: 必要なサブコマンド処理（create_tag, remove_tag, switch_traffic）を内部的に実施
+		// TODO: 必要なサブコマンド処理（create-tag, remove-tag, switch-traffic）を内部的に実施
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(createRevisionCmd)
+	createRevisionCmd.Flags().StringP("image", "i", "", "コンテナイメージのURL")
+	createRevisionCmd.MarkFlagRequired("image")
+
 	rootCmd.AddCommand(createTagCmd)
 	rootCmd.AddCommand(removeTagCmd)
 	rootCmd.AddCommand(switchTrafficCmd)
