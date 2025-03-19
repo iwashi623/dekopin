@@ -1,6 +1,7 @@
 package dekopin
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,6 +10,7 @@ import (
 )
 
 func CreateRevision(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	image, err := cmd.Flags().GetString("image")
 	if err != nil {
 		return fmt.Errorf("failed to get image flag: %w", err)
@@ -20,13 +22,10 @@ func CreateRevision(cmd *cobra.Command, args []string) error {
 
 	commitHash := getCommitHash(cmd)
 
-	return createRevision(cmd, image, commitHash)
+	return createRevision(ctx, image, commitHash)
 }
 
-func createRevision(cmd *cobra.Command, image string, commitHash string) error {
-	// Get context
-	ctx := cmd.Context()
-
+func createRevision(ctx context.Context, image string, commitHash string) error {
 	fmt.Println("Starting to create a new Cloud Run revision...")
 
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "deploy", config.Service,

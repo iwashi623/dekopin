@@ -43,10 +43,7 @@ var createTagCmd = &cobra.Command{
 var removeTagCmd = &cobra.Command{
 	Use:   "remove-tag",
 	Short: "Remove a Revision tag from a Cloud Run revision",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Removing tag from revision...")
-		// TODO: Implement tag removal process with revision ID and target tag
-	},
+	RunE:  RemoveTag,
 }
 
 var switchTrafficCmd = &cobra.Command{
@@ -79,6 +76,8 @@ func init() {
 	createTagCmd.Flags().String("revision", "", "revision name")
 
 	rootCmd.AddCommand(removeTagCmd)
+	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
+
 	rootCmd.AddCommand(switchTrafficCmd)
 	rootCmd.AddCommand(deployCmd)
 }
