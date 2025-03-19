@@ -8,7 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type gcloudCmdKey struct{}
+
 func Run(ctx context.Context) (int, error) {
+	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr)
+	ctx = context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
+
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		return 1, err
@@ -31,35 +36,41 @@ var rootCmd = &cobra.Command{
 var createRevisionCmd = &cobra.Command{
 	Use:   "create-revision",
 	Short: "Create a new Cloud Run revision",
-	RunE:  CreateRevision,
+	RunE:  CreateRevisionCommand,
 }
 
 var createTagCmd = &cobra.Command{
 	Use:   "create-tag",
 	Short: "Assign a Revision tag to a Cloud Run revision",
-	RunE:  CreateTag,
+	RunE:  CreateTagCommand,
 }
 
 var removeTagCmd = &cobra.Command{
 	Use:   "remove-tag",
 	Short: "Remove a Revision tag from a Cloud Run revision",
-	RunE:  RemoveTag,
+	RunE:  RemoveTagCommand,
 }
 
 var deployCmd = &cobra.Command{
-	Use:   "deploy",
-	Short: "Deploy new revision with tag and traffic management",
+	Use: "deploy",
+	// イメージを指定して新しいリビジョンを作成
+	Short: "Deploy new revision with image",
+	RunE:  DeployCommand,
+}
+
+var srDeployCmd = &cobra.Command{
+	Use:   "sr-deploy",
+	Short: "Switch Revision Deploy(Deploy new revision with revision name)",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Deploying new revision with tag management and traffic switching...")
-		// TODO: Execute necessary subcommand processes (create-tag, remove-tag, switch-traffic) internally
+		fmt.Println("Switching revision")
 	},
 }
 
 var stDeployCmd = &cobra.Command{
 	Use:   "st-deploy",
-	Short: "Deploy new revision with tag and traffic management",
+	Short: "Switch Tag Deploy(Assign a Revision tag to a Cloud Run revision)",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Deploying new revision with tag management and traffic switching...")
+		fmt.Println("Switching tag")
 	},
 }
 
@@ -78,6 +89,7 @@ func init() {
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
 
 	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(srDeployCmd)
 	rootCmd.AddCommand(stDeployCmd)
 }
 
@@ -89,17 +101,25 @@ func setRootFlags(cmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
 }
 
+const (
+	COMMIT_HASH_LENGTH = 7
+)
+
 func getCommitHash(cmd *cobra.Command) string {
 	if config.Runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
-		// Get first 7 characters
-		return sha[:7]
+		if len(sha) < COMMIT_HASH_LENGTH {
+			return ""
+		}
+		return sha[:COMMIT_HASH_LENGTH]
 	}
 
 	if config.Runner == RUNNER_CLOUD_BUILD {
 		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
-		// Get first 7 characters
-		return sha[:7]
+		if len(sha) < COMMIT_HASH_LENGTH {
+			return ""
+		}
+		return sha[:COMMIT_HASH_LENGTH]
 	}
 
 	return ""

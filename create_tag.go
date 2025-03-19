@@ -16,7 +16,7 @@ const (
 	REVISION_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s/revisions/%s"
 )
 
-func CreateTag(cmd *cobra.Command, args []string) error {
+func CreateTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	tag, err := getTagName(cmd)
 	if err != nil {
@@ -32,9 +32,6 @@ func CreateTag(cmd *cobra.Command, args []string) error {
 }
 
 func createTag(ctx context.Context, tag string, revisionName string) error {
-	// Convert tag format
-	formattedTag := "tag-" + strings.ReplaceAll(tag, ".", "-")
-
 	// revisionが存在するか確認する
 	client, err := run.NewRevisionsRESTClient(ctx)
 	if err != nil {
@@ -50,6 +47,8 @@ func createTag(ctx context.Context, tag string, revisionName string) error {
 		return fmt.Errorf("failed to get revision: revisionName: %s is not found, error: %w", fullRevisionName, err)
 	}
 
+	// Convert tag format
+	formattedTag := "tag-" + strings.ReplaceAll(tag, ".", "-")
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
 		"--region", config.Region,
 		"--project", config.Project,

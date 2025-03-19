@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func RemoveTag(cmd *cobra.Command, args []string) error {
+func RemoveTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	tag, err := getTagName(cmd)
 	if err != nil {
