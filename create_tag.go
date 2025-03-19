@@ -30,6 +30,7 @@ func createTag(cmd *cobra.Command, tag string, revision string) error {
 
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
 		"--region", config.Region,
+		"--project", config.Project,
 		"--update-tags", "tag-"+formattedTag+"="+revision,
 		"--to-revisions", revision+"=0",
 	)

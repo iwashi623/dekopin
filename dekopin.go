@@ -21,6 +21,9 @@ var rootCmd = &cobra.Command{
 	Short: "Dekopin is a Cloud Run deployment tool",
 	Long:  "Dekopin is a tool to deploy Cloud Run services with tags and traffic management.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateRunnerFunc(cmd, args); err != nil {
+			return err
+		}
 		return setConfig(cmd)
 	},
 }
@@ -67,7 +70,6 @@ var deployCmd = &cobra.Command{
 
 func init() {
 	setRootFlags(rootCmd)
-	rootCmd.PersistentPreRunE = validateRunnerFunc
 
 	rootCmd.AddCommand(createRevisionCmd)
 	createRevisionCmd.Flags().StringP("image", "i", "", "container image")
@@ -83,10 +85,10 @@ func init() {
 }
 
 func setRootFlags(cmd *cobra.Command) {
-	rootCmd.PersistentFlags().StringP("project", "p", "", "GCP project id")
-	rootCmd.PersistentFlags().StringP("region", "r", "", "region")
-	rootCmd.PersistentFlags().StringP("service", "s", "", "service name")
-	rootCmd.PersistentFlags().StringP("runner", "r", "", "runner type")
+	rootCmd.PersistentFlags().String("project", "", "GCP project id")
+	rootCmd.PersistentFlags().String("region", "", "region")
+	rootCmd.PersistentFlags().String("service", "", "service name")
+	rootCmd.PersistentFlags().String("runner", "", "runner type")
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
 }
 
