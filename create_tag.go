@@ -12,12 +12,12 @@ import (
 func CreateTag(cmd *cobra.Command, args []string) error {
 	tag, err := getTagName(cmd)
 	if err != nil {
-		return fmt.Errorf("tag名の取得に失敗しました: %w", err)
+		return fmt.Errorf("failed to get tag name: %w", err)
 	}
 
 	revision, err := getRevisionName(cmd)
 	if err != nil {
-		return fmt.Errorf("revision名の取得に失敗しました: %w", err)
+		return fmt.Errorf("failed to get revision name: %w", err)
 	}
 
 	return createTag(cmd, tag, revision)
@@ -25,7 +25,7 @@ func CreateTag(cmd *cobra.Command, args []string) error {
 
 func createTag(cmd *cobra.Command, tag string, revision string) error {
 	ctx := cmd.Context()
-	// tagのフォーマットを変換
+	// Convert tag format
 	formattedTag := strings.ReplaceAll(tag, ".", "-")
 
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
@@ -38,9 +38,9 @@ func createTag(cmd *cobra.Command, tag string, revision string) error {
 	gcloudCmd.Stdout = os.Stdout
 	gcloudCmd.Stderr = os.Stderr
 
-	// コマンド実行
+	// Execute command
 	if err := gcloudCmd.Run(); err != nil {
-		return fmt.Errorf("タグの作成に失敗しました: %w", err)
+		return fmt.Errorf("failed to create tag: %w", err)
 	}
 	return nil
 }

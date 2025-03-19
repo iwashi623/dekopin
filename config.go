@@ -13,22 +13,20 @@ var config DekopinConfig
 func setConfig(cmd *cobra.Command) error {
 	fileName, err := cmd.Flags().GetString("file")
 	if err != nil {
-		return fmt.Errorf("ファイル名の取得に失敗しました: %w", err)
+		return fmt.Errorf("failed to get filename: %w", err)
 	}
 
 	dekopinYaml, err := os.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("ファイルの読み込みに失敗しました: %w", err)
+		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	err = yaml.Unmarshal(dekopinYaml, &config)
-	if err != nil {
-		return fmt.Errorf("ファイルのパースに失敗しました: %w", err)
+	if err := yaml.Unmarshal(dekopinYaml, &config); err != nil {
+		return fmt.Errorf("failed to parse configuration file: %w", err)
 	}
 
-	err = config.validate()
-	if err != nil {
-		return fmt.Errorf("設定の検証に失敗しました: %w", err)
+	if err := config.validate(); err != nil {
+		return fmt.Errorf("failed to validate configuration: %w", err)
 	}
 
 	return nil

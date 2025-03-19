@@ -11,11 +11,11 @@ import (
 func CreateRevision(cmd *cobra.Command, args []string) error {
 	image, err := cmd.Flags().GetString("image")
 	if err != nil {
-		return fmt.Errorf("imageフラグの取得に失敗しました: %w", err)
+		return fmt.Errorf("failed to get image flag: %w", err)
 	}
 
 	if image == "" {
-		return fmt.Errorf("imageフラグが指定されていません")
+		return fmt.Errorf("image flag is required")
 	}
 
 	commitHash := getCommitHash(cmd)
@@ -24,16 +24,16 @@ func CreateRevision(cmd *cobra.Command, args []string) error {
 }
 
 func createRevision(cmd *cobra.Command, image string, commitHash string) error {
-	// コンテキストを取得
+	// Get context
 	ctx := cmd.Context()
 
-	fmt.Println("新しいCloud Runリビジョンの作成を開始します...")
+	fmt.Println("Starting to create a new Cloud Run revision...")
 
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "deploy", config.Service,
 		"--image", image,
 		"--project", config.Project,
 		"--region", config.Region,
-		"--no-traffic", // 重要: 新しいリビジョンにトラフィックを流さない
+		"--no-traffic", // Important: Do not route traffic to the new revision
 	)
 
 	if commitHash != "" {
@@ -43,12 +43,12 @@ func createRevision(cmd *cobra.Command, image string, commitHash string) error {
 	gcloudCmd.Stdout = os.Stdout
 	gcloudCmd.Stderr = os.Stderr
 
-	// コマンド実行
+	// Execute command
 	if err := gcloudCmd.Run(); err != nil {
-		return fmt.Errorf("Cloud Runへのデプロイに失敗しました: %w", err)
+		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}
 
-	fmt.Println("新しいリビジョンが正常にデプロイされました")
+	fmt.Println("New revision has been successfully deployed")
 
 	return nil
 }

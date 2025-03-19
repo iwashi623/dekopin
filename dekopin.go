@@ -31,7 +31,6 @@ var rootCmd = &cobra.Command{
 var createRevisionCmd = &cobra.Command{
 	Use:   "create-revision",
 	Short: "Create a new Cloud Run revision",
-	Args:  cobra.NoArgs,
 	RunE:  CreateRevision,
 }
 
@@ -46,7 +45,7 @@ var removeTagCmd = &cobra.Command{
 	Short: "Remove a Revision tag from a Cloud Run revision",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Removing tag from revision...")
-		// TODO: リビジョン ID と対象タグを指定してタグ削除処理を実装
+		// TODO: Implement tag removal process with revision ID and target tag
 	},
 }
 
@@ -55,7 +54,7 @@ var switchTrafficCmd = &cobra.Command{
 	Short: "Switch traffic to a specified Cloud Run revision",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Switching traffic...")
-		// TODO: 対象リビジョンとトラフィック割合を引数・フラグから取得し、トラフィック制御を実施
+		// TODO: Implement traffic control with target revision and traffic percentage from arguments/flags
 	},
 }
 
@@ -64,7 +63,7 @@ var deployCmd = &cobra.Command{
 	Short: "Deploy new revision with tag and traffic management",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Deploying new revision with tag management and traffic switching...")
-		// TODO: 必要なサブコマンド処理（create-tag, remove-tag, switch-traffic）を内部的に実施
+		// TODO: Execute necessary subcommand processes (create-tag, remove-tag, switch-traffic) internally
 	},
 }
 
@@ -95,13 +94,13 @@ func setRootFlags(cmd *cobra.Command) {
 func getCommitHash(cmd *cobra.Command) string {
 	if config.Runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
-		// 先頭の7文字を取得
+		// Get first 7 characters
 		return sha[:7]
 	}
 
 	if config.Runner == RUNNER_CLOUD_BUILD {
 		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
-		// 先頭の7文字を取得
+		// Get first 7 characters
 		return sha[:7]
 	}
 
@@ -119,13 +118,13 @@ func getTagName(cmd *cobra.Command) (string, error) {
 	}
 
 	if t, err := cmd.Flags().GetString("tag"); err != nil {
-		return "", fmt.Errorf("tagフラグの取得に失敗しました: %w", err)
+		return "", fmt.Errorf("failed to get tag flag: %w", err)
 	} else if t != "" {
 		tagName = t
 	}
 
 	if tagName == "" {
-		return "", fmt.Errorf("tagフラグが指定されていません")
+		return "", fmt.Errorf("tag flag is required")
 	}
 
 	return tagName, nil
@@ -133,7 +132,7 @@ func getTagName(cmd *cobra.Command) (string, error) {
 
 func getRevisionName(cmd *cobra.Command) (string, error) {
 	if rv, err := cmd.Flags().GetString("revision"); err != nil {
-		return "", fmt.Errorf("revisionフラグの取得に失敗しました: %w", err)
+		return "", fmt.Errorf("failed to get revision flag: %w", err)
 	} else if rv != "" {
 		return rv, nil
 	}
@@ -142,12 +141,12 @@ func getRevisionName(cmd *cobra.Command) (string, error) {
 		return config.Service + "-" + prefix, nil
 	}
 
-	return "", fmt.Errorf("revisionフラグが指定されていません")
+	return "", fmt.Errorf("revision flag is required")
 }
 
 func validateRunner(runner string) error {
 	if !validRunners[runner] {
-		return fmt.Errorf("無効なランナータイプです。有効な値: github-actions, cloud-build, local")
+		return fmt.Errorf("invalid runner type. Valid values: github-actions, cloud-build, local")
 	}
 	return nil
 }
