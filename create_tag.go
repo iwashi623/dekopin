@@ -3,8 +3,6 @@ package dekopin
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	run "cloud.google.com/go/run/apiv2"
@@ -18,6 +16,11 @@ const (
 
 func CreateTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
+	if !ok {
+		return fmt.Errorf("gcloud command not found")
+	}
+
 	tag, err := getTagName(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to get tag name: %w", err)
@@ -28,10 +31,10 @@ func CreateTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get revision name: %w", err)
 	}
 
-	return createTag(ctx, tag, revision)
+	return createTag(ctx, gcloudCmd, tag, revision)
 }
 
-func createTag(ctx context.Context, tag string, revisionName string) error {
+func createTag(ctx context.Context, gc GcloudCommand, tag string, revisionName string) error {
 	// revisionが存在するか確認する
 	client, err := run.NewRevisionsRESTClient(ctx)
 	if err != nil {
@@ -47,20 +50,6 @@ func createTag(ctx context.Context, tag string, revisionName string) error {
 		return fmt.Errorf("failed to get revision: revisionName: %s is not found, error: %w", fullRevisionName, err)
 	}
 
-	// Convert tag format
 	formattedTag := "tag-" + strings.ReplaceAll(tag, ".", "-")
-	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
-		"--region", config.Region,
-		"--project", config.Project,
-		"--update-tags", formattedTag+"="+revisionName,
-	)
-
-	gcloudCmd.Stdout = os.Stdout
-	gcloudCmd.Stderr = os.Stderr
-
-	// Execute command
-	if err := gcloudCmd.Run(); err != nil {
-		return fmt.Errorf("failed to create tag: %w", err)
-	}
-	return nil
+	return gc.CreateRevisionTag(ctx, formattedTag, revisionName)
 }

@@ -3,6 +3,7 @@ package dekopin
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,15 +11,15 @@ import (
 
 type gcloudCmdKey struct{}
 
-func Run(ctx context.Context) (int, error) {
+func Run(ctx context.Context) int {
 	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr)
 	ctx = context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		fmt.Println(err)
-		return 1, err
+		log.Printf("ERROR: %s", err)
+		return 1
 	}
-	return 0, nil
+	return 0
 }
 
 var rootCmd = &cobra.Command{
@@ -131,12 +132,12 @@ func getTagName(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
-	if tag == "" && config.Runner == RUNNER_LOCAL {
-		return "", fmt.Errorf("tag flag is required")
-	}
-
 	if tag != "" {
 		return tag, nil
+	}
+
+	if tag == "" && config.Runner == RUNNER_LOCAL {
+		return "", fmt.Errorf("tag flag is required")
 	}
 
 	if config.Runner == RUNNER_GITHUB_ACTIONS {
@@ -156,12 +157,12 @@ func getRevisionName(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("failed to get revision flag: %w", err)
 	}
 
-	if config.Runner == RUNNER_LOCAL && rv == "" {
-		return "", fmt.Errorf("revision flag is required")
-	}
-
 	if rv != "" {
 		return rv, nil
+	}
+
+	if config.Runner == RUNNER_LOCAL && rv == "" {
+		return "", fmt.Errorf("revision flag is required")
 	}
 
 	if prefix := getCommitHash(cmd); prefix != "" {

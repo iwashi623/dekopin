@@ -8,8 +8,8 @@ import (
 )
 
 type GcloudCommand interface {
-	CreateTag(ctx context.Context, revisionTag string, revisionName string) error
-	RemoveTag(ctx context.Context, revisionTag string) error
+	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error
+	RemoveRevisionTag(ctx context.Context, revisionTag string) error
 	CreateRevision(ctx context.Context, imageName string, commitHash string) error
 }
 
@@ -25,7 +25,7 @@ func NewGcloudCommand(stdout io.Writer, stderr io.Writer) GcloudCommand {
 	}
 }
 
-func (c *gcloudCommand) CreateTag(ctx context.Context, revisionTag string, revisionName string) error {
+func (c *gcloudCommand) CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error {
 	cmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
 		"--region", config.Region,
 		"--project", config.Project,
@@ -38,7 +38,7 @@ func (c *gcloudCommand) CreateTag(ctx context.Context, revisionTag string, revis
 	return nil
 }
 
-func (c *gcloudCommand) RemoveTag(ctx context.Context, revisionTag string) error {
+func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag string) error {
 	cmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
 		"--region", config.Region,
 		"--project", config.Project,
