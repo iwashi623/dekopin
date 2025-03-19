@@ -23,7 +23,12 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("image flag is required")
 	}
 
-	commitHash := getCommitHash()
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
+	commitHash := getCommitHash(opt.Runner)
 
 	return CreateRevisionExec(ctx, gcloudCmd, image, commitHash)
 }

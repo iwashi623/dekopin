@@ -103,8 +103,8 @@ const (
 	COMMIT_HASH_LENGTH = 7
 )
 
-func getCommitHash() string {
-	if config.Runner == RUNNER_GITHUB_ACTIONS {
+func getCommitHash(runner string) string {
+	if runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
 		if len(sha) < COMMIT_HASH_LENGTH {
 			return ""
@@ -112,7 +112,7 @@ func getCommitHash() string {
 		return sha[:COMMIT_HASH_LENGTH]
 	}
 
-	if config.Runner == RUNNER_CLOUD_BUILD {
+	if runner == RUNNER_CLOUD_BUILD {
 		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
 		if len(sha) < COMMIT_HASH_LENGTH {
 			return ""
@@ -144,6 +144,11 @@ func prepareRun(cmd *cobra.Command, args []string) error {
 }
 
 func getTagName(cmd *cobra.Command) (string, error) {
+	opt, err := GetCmdOption(cmd.Context())
+	if err != nil {
+		return "", fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
 	tag, err := cmd.Flags().GetString("tag")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tag flag: %w", err)
@@ -153,15 +158,15 @@ func getTagName(cmd *cobra.Command) (string, error) {
 		return tag, nil
 	}
 
-	if tag == "" && config.Runner == RUNNER_LOCAL {
+	if tag == "" && opt.Runner == RUNNER_LOCAL {
 		return "", fmt.Errorf("tag flag is required")
 	}
 
-	if config.Runner == RUNNER_GITHUB_ACTIONS {
+	if opt.Runner == RUNNER_GITHUB_ACTIONS {
 		return os.Getenv(ENV_GITHUB_REF), nil
 	}
 
-	if config.Runner == RUNNER_CLOUD_BUILD {
+	if opt.Runner == RUNNER_CLOUD_BUILD {
 		return os.Getenv(ENV_CLOUD_BUILD_REF), nil
 	}
 
@@ -169,6 +174,11 @@ func getTagName(cmd *cobra.Command) (string, error) {
 }
 
 func getRevisionName(cmd *cobra.Command) (string, error) {
+	opt, err := GetCmdOption(cmd.Context())
+	if err != nil {
+		return "", fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
 	rv, err := cmd.Flags().GetString("revision")
 	if err != nil {
 		return "", fmt.Errorf("failed to get revision flag: %w", err)
@@ -178,12 +188,12 @@ func getRevisionName(cmd *cobra.Command) (string, error) {
 		return rv, nil
 	}
 
-	if config.Runner == RUNNER_LOCAL && rv == "" {
+	if opt.Runner == RUNNER_LOCAL && rv == "" {
 		return "", fmt.Errorf("revision flag is required")
 	}
 
-	if prefix := getCommitHash(); prefix != "" {
-		return config.Service + "-" + prefix, nil
+	if prefix := getCommitHash(opt.Runner); prefix != "" {
+		return opt.Service + "-" + prefix, nil
 	}
 
 	return "", fmt.Errorf("revision flag is required")

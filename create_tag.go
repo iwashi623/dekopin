@@ -35,6 +35,11 @@ func CreateTagCommand(cmd *cobra.Command, args []string) error {
 }
 
 func createTag(ctx context.Context, gc GcloudCommand, tag string, revisionName string) error {
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
 	// revisionが存在するか確認する
 	client, err := run.NewRevisionsRESTClient(ctx)
 	if err != nil {
@@ -42,7 +47,7 @@ func createTag(ctx context.Context, gc GcloudCommand, tag string, revisionName s
 	}
 	defer client.Close()
 
-	fullRevisionName := fmt.Sprintf(REVISION_FULL_NAME_FORMAT, config.Project, config.Region, config.Service, revisionName)
+	fullRevisionName := fmt.Sprintf(REVISION_FULL_NAME_FORMAT, opt.Project, opt.Region, opt.Service, revisionName)
 	_, err = client.GetRevision(ctx, &runpb.GetRevisionRequest{
 		Name: fullRevisionName,
 	})

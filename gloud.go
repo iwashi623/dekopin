@@ -9,13 +9,13 @@ import (
 )
 
 type GcloudCommand interface {
-	CreateRevision(ctx context.Context, imageName string, revisionName string) error
+	CreateRevision(ctx context.Context, imageName string, commitHash string) error
 	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error
 	RemoveRevisionTag(ctx context.Context, revisionTag string) error
-	Deploy(ctx context.Context, imageName string, revisionName string, useTraffic bool) error
+	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error
 	UpdateTrafficToLatestRevision(ctx context.Context) error
 	UpdateTrafficToRevision(ctx context.Context, revisionName string) error
-	DeployWithTraffic(ctx context.Context, imageName string, revisionName string) error
+	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error
 }
 
 type gcloudCommand struct {
@@ -32,8 +32,8 @@ func NewGcloudCommand(stdout io.Writer, stderr io.Writer) GcloudCommand {
 	}
 }
 
-func (c *gcloudCommand) CreateRevision(ctx context.Context, imageName string, revisionName string) error {
-	if err := c.Deploy(ctx, imageName, revisionName, false); err != nil {
+func (c *gcloudCommand) CreateRevision(ctx context.Context, imageName string, commitHash string) error {
+	if err := c.Deploy(ctx, imageName, commitHash, false); err != nil {
 		return fmt.Errorf("failed to create revision: %w", err)
 	}
 
@@ -71,7 +71,7 @@ func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag strin
 	return nil
 }
 
-func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, revisionName string, useTraffic bool) error {
+func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -80,8 +80,8 @@ func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, revisionNa
 	cmd := runDeployCmd(ctx, opt.Service, opt.Region, opt.Project)
 	cmd.Args = append(cmd.Args, "--image", imageName)
 
-	if revisionName != "" {
-		cmd.Args = append(cmd.Args, "--revision-suffix", revisionName)
+	if commitHash != "" {
+		cmd.Args = append(cmd.Args, "--revision-suffix", commitHash)
 	}
 
 	if !useTraffic {
@@ -128,8 +128,8 @@ func (c *gcloudCommand) UpdateTrafficToRevision(ctx context.Context, revisionNam
 	return nil
 }
 
-func (c *gcloudCommand) DeployWithTraffic(ctx context.Context, imageName string, revisionName string) error {
-	if err := c.Deploy(ctx, imageName, revisionName, true); err != nil {
+func (c *gcloudCommand) DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error {
+	if err := c.Deploy(ctx, imageName, commitHash, true); err != nil {
 		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}
 

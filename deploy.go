@@ -19,7 +19,11 @@ func DeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get image flag: %w", err)
 	}
 
-	commitHash := getCommitHash()
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+	commitHash := getCommitHash(opt.Runner)
 
 	return deploy(ctx, gcloudCmd, image, commitHash)
 }
