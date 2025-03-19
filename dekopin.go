@@ -107,32 +107,41 @@ func getCommitHash(cmd *cobra.Command) string {
 }
 
 func getTagName(cmd *cobra.Command) (string, error) {
-	var tagName string
-	if config.Runner == RUNNER_GITHUB_ACTIONS {
-		tagName = os.Getenv(ENV_GITHUB_TAG)
-	}
-
-	if config.Runner == RUNNER_CLOUD_BUILD {
-		tagName = os.Getenv(ENV_CLOUD_BUILD_TAG)
-	}
-
-	if t, err := cmd.Flags().GetString("tag"); err != nil {
+	tag, err := cmd.Flags().GetString("tag")
+	if err != nil {
 		return "", fmt.Errorf("failed to get tag flag: %w", err)
-	} else if t != "" {
-		tagName = t
 	}
 
-	if tagName == "" {
+	if tag == "" && config.Runner == RUNNER_LOCAL {
 		return "", fmt.Errorf("tag flag is required")
 	}
 
-	return tagName, nil
+	if tag != "" {
+		return tag, nil
+	}
+
+	if config.Runner == RUNNER_GITHUB_ACTIONS {
+		return os.Getenv(ENV_GITHUB_REF), nil
+	}
+
+	if config.Runner == RUNNER_CLOUD_BUILD {
+		return os.Getenv(ENV_CLOUD_BUILD_REF), nil
+	}
+
+	return "", fmt.Errorf("tag flag is required")
 }
 
 func getRevisionName(cmd *cobra.Command) (string, error) {
-	if rv, err := cmd.Flags().GetString("revision"); err != nil {
+	rv, err := cmd.Flags().GetString("revision")
+	if err != nil {
 		return "", fmt.Errorf("failed to get revision flag: %w", err)
-	} else if rv != "" {
+	}
+
+	if config.Runner == RUNNER_LOCAL && rv == "" {
+		return "", fmt.Errorf("revision flag is required")
+	}
+
+	if rv != "" {
 		return rv, nil
 	}
 
