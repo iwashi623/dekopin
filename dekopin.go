@@ -46,21 +46,20 @@ var removeTagCmd = &cobra.Command{
 	RunE:  RemoveTag,
 }
 
-var switchTrafficCmd = &cobra.Command{
-	Use:   "switch-traffic",
-	Short: "Switch traffic to a specified Cloud Run revision",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Switching traffic...")
-		// TODO: Implement traffic control with target revision and traffic percentage from arguments/flags
-	},
-}
-
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy new revision with tag and traffic management",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Deploying new revision with tag management and traffic switching...")
 		// TODO: Execute necessary subcommand processes (create-tag, remove-tag, switch-traffic) internally
+	},
+}
+
+var stDeployCmd = &cobra.Command{
+	Use:   "st-deploy",
+	Short: "Deploy new revision with tag and traffic management",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Deploying new revision with tag management and traffic switching...")
 	},
 }
 
@@ -78,8 +77,8 @@ func init() {
 	rootCmd.AddCommand(removeTagCmd)
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
 
-	rootCmd.AddCommand(switchTrafficCmd)
 	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(stDeployCmd)
 }
 
 func setRootFlags(cmd *cobra.Command) {

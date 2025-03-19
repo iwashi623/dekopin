@@ -7,7 +7,13 @@ import (
 	"os/exec"
 	"strings"
 
+	run "cloud.google.com/go/run/apiv2"
+	"cloud.google.com/go/run/apiv2/runpb"
 	"github.com/spf13/cobra"
+)
+
+const (
+	REVISION_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s/revisions/%s"
 )
 
 func CreateTag(cmd *cobra.Command, args []string) error {
@@ -25,14 +31,29 @@ func CreateTag(cmd *cobra.Command, args []string) error {
 	return createTag(ctx, tag, revision)
 }
 
-func createTag(ctx context.Context, tag string, revision string) error {
+func createTag(ctx context.Context, tag string, revisionName string) error {
 	// Convert tag format
 	formattedTag := "tag-" + strings.ReplaceAll(tag, ".", "-")
+
+	// revisionが存在するか確認する
+	client, err := run.NewRevisionsRESTClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create run client: %w", err)
+	}
+	defer client.Close()
+
+	fullRevisionName := fmt.Sprintf(REVISION_FULL_NAME_FORMAT, config.Project, config.Region, config.Service, revisionName)
+	_, err = client.GetRevision(ctx, &runpb.GetRevisionRequest{
+		Name: fullRevisionName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get revision: revisionName: %s is not found, error: %w", fullRevisionName, err)
+	}
 
 	gcloudCmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
 		"--region", config.Region,
 		"--project", config.Project,
-		"--update-tags", formattedTag+"="+revision,
+		"--update-tags", formattedTag+"="+revisionName,
 	)
 
 	gcloudCmd.Stdout = os.Stdout
