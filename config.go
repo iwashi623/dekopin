@@ -51,7 +51,7 @@ const (
 	RUNNER_GITHUB_ACTIONS = "github-actions"
 	RUNNER_CLOUD_BUILD    = "cloud-build"
 
-	ENV_GITHUB_TAG      = "GITHUB_REF_NAME"
+	ENV_GITHUB_TAG      = "GITHUB_REF"
 	ENV_CLOUD_BUILD_TAG = "TAG_NAME"
 
 	ENV_GITHUB_SHA      = "GITHUB_SHA"
