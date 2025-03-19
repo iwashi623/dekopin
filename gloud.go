@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -13,6 +14,7 @@ type GcloudCommand interface {
 	RemoveRevisionTag(ctx context.Context, revisionTag string) error
 	Deploy(ctx context.Context, imageName string, revisionName string, useTraffic bool) error
 	UpdateTrafficToLatestRevision(ctx context.Context) error
+	UpdateTrafficToRevision(ctx context.Context, revisionName string) error
 	DeployWithTraffic(ctx context.Context, imageName string, revisionName string) error
 }
 
@@ -39,11 +41,13 @@ func (c *gcloudCommand) CreateRevision(ctx context.Context, imageName string, re
 }
 
 func (c *gcloudCommand) CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error {
-	cmd := updateTrafficCmd(ctx)
-	cmd.Args = append(cmd.Args, "--update-tags", revisionTag+"="+revisionName)
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
 
-	cmd.Stdout = c.Stdout
-	cmd.Stderr = c.Stderr
+	cmd := updateTrafficCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--update-tags", revisionTag+"="+revisionName)
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create tag: %w", err)
@@ -52,11 +56,13 @@ func (c *gcloudCommand) CreateRevisionTag(ctx context.Context, revisionTag strin
 }
 
 func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag string) error {
-	cmd := updateTrafficCmd(ctx)
-	cmd.Args = append(cmd.Args, "--remove-tags", revisionTag)
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
 
-	cmd.Stdout = c.Stdout
-	cmd.Stderr = c.Stderr
+	cmd := updateTrafficCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--remove-tags", revisionTag)
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to remove tag: %w", err)
@@ -66,11 +72,13 @@ func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag strin
 }
 
 func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, revisionName string, useTraffic bool) error {
-	cmd := runDeployCmd(ctx)
-	cmd.Args = append(cmd.Args, "--image", imageName)
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
 
-	cmd.Stdout = c.Stdout
-	cmd.Stderr = c.Stderr
+	cmd := runDeployCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--image", imageName)
 
 	if revisionName != "" {
 		cmd.Args = append(cmd.Args, "--revision-suffix", revisionName)
@@ -89,14 +97,32 @@ func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, revisionNa
 }
 
 func (c *gcloudCommand) UpdateTrafficToLatestRevision(ctx context.Context) error {
-	cmd := updateTrafficCmd(ctx)
-	cmd.Args = append(cmd.Args, "--to-latest")
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
 
-	cmd.Stdout = c.Stdout
-	cmd.Stderr = c.Stderr
+	cmd := updateTrafficCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--to-latest")
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to update traffic to latest revision: %w", err)
+	}
+
+	return nil
+}
+
+func (c *gcloudCommand) UpdateTrafficToRevision(ctx context.Context, revisionName string) error {
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
+	cmd := updateTrafficCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--to-revisions", revisionName+"=100")
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update traffic to revision: %w", err)
 	}
 
 	return nil
@@ -114,16 +140,26 @@ func (c *gcloudCommand) DeployWithTraffic(ctx context.Context, imageName string,
 	return nil
 }
 
-func updateTrafficCmd(ctx context.Context) *exec.Cmd {
-	return exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", config.Service,
-		"--region", config.Region,
-		"--project", config.Project,
+func updateTrafficCmd(ctx context.Context, service string, region string, project string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "gcloud", "run", "services", "update-traffic", service,
+		"--region", region,
+		"--project", project,
 	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd
 }
 
-func runDeployCmd(ctx context.Context) *exec.Cmd {
-	return exec.CommandContext(ctx, "gcloud", "run", "deploy", config.Service,
-		"--project", config.Project,
-		"--region", config.Region,
+func runDeployCmd(ctx context.Context, service string, region string, project string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "gcloud", "run", "deploy", service,
+		"--project", project,
+		"--region", region,
 	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd
 }

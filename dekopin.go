@@ -56,9 +56,7 @@ var deployCmd = &cobra.Command{
 var srDeployCmd = &cobra.Command{
 	Use:   "sr-deploy",
 	Short: "Switch Revision Deploy(Deploy new revision with revision name)",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Switching revision")
-	},
+	RunE:  SwitchRevisionDeployCommand,
 }
 
 var stDeployCmd = &cobra.Command{
@@ -88,6 +86,8 @@ func init() {
 	deployCmd.MarkFlagRequired("image")
 
 	rootCmd.AddCommand(srDeployCmd)
+	srDeployCmd.Flags().String("revision", "LATEST", "revision name")
+
 	rootCmd.AddCommand(stDeployCmd)
 }
 
@@ -194,58 +194,4 @@ func validateRunner(runner string) error {
 		return fmt.Errorf("invalid runner type. Valid values: github-actions, cloud-build, local")
 	}
 	return nil
-}
-
-type cmdOptionKey struct{}
-
-type CmdOption struct {
-	Project string
-	Region  string
-	Service string
-	Runner  string
-}
-
-func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error) {
-	project, err := cmd.Flags().GetString("project")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get project flag: %w", err)
-	}
-	if project == "" {
-		project = config.Project
-	}
-
-	region, err := cmd.Flags().GetString("region")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get region flag: %w", err)
-	}
-	if region == "" {
-		region = config.Region
-	}
-
-	service, err := cmd.Flags().GetString("service")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get service flag: %w", err)
-	}
-	if service == "" {
-		service = config.Service
-	}
-
-	runner, err := cmd.Flags().GetString("runner")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get runner flag: %w", err)
-	}
-	if runner == "" {
-		runner = config.Runner
-	}
-
-	if project == "" || region == "" || service == "" || runner == "" {
-		return nil, fmt.Errorf("project, region, service, and runner are required")
-	}
-
-	return &CmdOption{
-		Project: project,
-		Region:  region,
-		Service: service,
-		Runner:  runner,
-	}, nil
 }
