@@ -51,7 +51,7 @@ var rootCmd = &cobra.Command{
 	Use:               "dekopin",
 	Short:             "Dekopin is a Cloud Run deployment tool",
 	Long:              "Dekopin is a tool to deploy Cloud Run services with tags and traffic management.",
-	PersistentPreRunE: prepareRun,
+	PersistentPreRunE: prepareAllRun,
 }
 
 func stDeployPreRun(cmd *cobra.Command, args []string) error {
@@ -110,7 +110,7 @@ func setRootFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
 }
 
-func prepareRun(cmd *cobra.Command, args []string) error {
+func prepareAllRun(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	config, err := getConfig(cmd)
