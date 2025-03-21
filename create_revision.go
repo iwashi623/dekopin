@@ -14,13 +14,9 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("gcloud command not found")
 	}
 
-	image, err := cmd.Flags().GetString("image")
+	image, err := getImageByFlag(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to get image flag: %w", err)
-	}
-
-	if image == "" {
-		return fmt.Errorf("image flag is required")
 	}
 
 	opt, err := GetCmdOption(ctx)

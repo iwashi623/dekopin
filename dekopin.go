@@ -62,9 +62,7 @@ var srDeployCmd = &cobra.Command{
 var stDeployCmd = &cobra.Command{
 	Use:   "st-deploy",
 	Short: "Switch Tag Deploy(Assign a Revision tag to a Cloud Run revision)",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Switching tag")
-	},
+	RunE:  SwitchTagDeployCommand,
 }
 
 func init() {
@@ -89,6 +87,7 @@ func init() {
 	srDeployCmd.Flags().String("revision", "LATEST", "revision name")
 
 	rootCmd.AddCommand(stDeployCmd)
+	stDeployCmd.Flags().StringP("tag", "t", "", "tag name")
 }
 
 func setRootFlags(rootCmd *cobra.Command) {
@@ -97,6 +96,26 @@ func setRootFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("service", "", "service name")
 	rootCmd.PersistentFlags().String("runner", "", "runner type")
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
+}
+
+func prepareRun(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+	if err := validateRunnerFunc(cmd, args); err != nil {
+		return err
+	}
+
+	if err := setConfig(cmd); err != nil {
+		return err
+	}
+
+	cmdOption, err := NewCmdOption(&config, cmd)
+	if err != nil {
+		return err
+	}
+
+	ctx = context.WithValue(ctx, cmdOptionKey{}, cmdOption)
+	cmd.SetContext(ctx)
+	return nil
 }
 
 const (
@@ -123,43 +142,10 @@ func getCommitHash(runner string) string {
 	return ""
 }
 
-func prepareRun(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
-	if err := validateRunnerFunc(cmd, args); err != nil {
-		return err
-	}
-
-	if err := setConfig(cmd); err != nil {
-		return err
-	}
-
-	cmdOption, err := NewCmdOption(&config, cmd)
-	if err != nil {
-		return err
-	}
-
-	ctx = context.WithValue(ctx, cmdOptionKey{}, cmdOption)
-	cmd.SetContext(ctx)
-	return nil
-}
-
-func getTagName(cmd *cobra.Command) (string, error) {
-	opt, err := GetCmdOption(cmd.Context())
+func getRunnerRef(ctx context.Context) (string, error) {
+	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get cmdOption: %w", err)
-	}
-
-	tag, err := cmd.Flags().GetString("tag")
-	if err != nil {
-		return "", fmt.Errorf("failed to get tag flag: %w", err)
-	}
-
-	if tag != "" {
-		return tag, nil
-	}
-
-	if tag == "" && opt.Runner == RUNNER_LOCAL {
-		return "", fmt.Errorf("tag flag is required")
 	}
 
 	if opt.Runner == RUNNER_GITHUB_ACTIONS {
@@ -170,25 +156,37 @@ func getTagName(cmd *cobra.Command) (string, error) {
 		return os.Getenv(ENV_CLOUD_BUILD_REF), nil
 	}
 
-	return "", fmt.Errorf("tag flag is required")
+	return "", fmt.Errorf("ref name is required")
 }
 
-func getRevisionName(cmd *cobra.Command) (string, error) {
-	opt, err := GetCmdOption(cmd.Context())
+func createRevisionTagName(ctx context.Context, tag string) (string, error) {
+	if tag != "" {
+		return tag, nil
+	}
+
+	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get cmdOption: %w", err)
 	}
 
-	rv, err := cmd.Flags().GetString("revision")
+	if tag == "" && opt.Runner == RUNNER_LOCAL {
+		return "", fmt.Errorf("tag flag is required")
+	}
+
+	return getRunnerRef(ctx)
+}
+
+func createRevisionName(ctx context.Context, revision string) (string, error) {
+	if revision != "" {
+		return revision, nil
+	}
+
+	opt, err := GetCmdOption(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to get revision flag: %w", err)
+		return "", fmt.Errorf("failed to get cmdOption: %w", err)
 	}
 
-	if rv != "" {
-		return rv, nil
-	}
-
-	if opt.Runner == RUNNER_LOCAL && rv == "" {
+	if opt.Runner == RUNNER_LOCAL && revision == "" {
 		return "", fmt.Errorf("revision flag is required")
 	}
 
@@ -196,7 +194,7 @@ func getRevisionName(cmd *cobra.Command) (string, error) {
 		return opt.Service + "-" + prefix, nil
 	}
 
-	return "", fmt.Errorf("revision flag is required")
+	return "", fmt.Errorf("failed to create revision name")
 }
 
 func validateRunner(runner string) error {

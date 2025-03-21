@@ -11,7 +11,7 @@ func DeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
 	if !ok {
-		return fmt.Errorf("gcloud 	command not found")
+		return fmt.Errorf("gcloud command not found")
 	}
 
 	image, err := cmd.Flags().GetString("image")

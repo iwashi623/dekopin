@@ -9,13 +9,13 @@ import (
 )
 
 type GcloudCommand interface {
-	CreateRevision(ctx context.Context, imageName string, commitHash string) error
-	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error
-	RemoveRevisionTag(ctx context.Context, revisionTag string) error
-	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error
-	UpdateTrafficToLatestRevision(ctx context.Context) error
-	UpdateTrafficToRevision(ctx context.Context, revisionName string) error
-	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error
+	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // リビジョンを作成する
+	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // リビジョンにタグを付ける
+	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // リビジョンのタグを削除する
+	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error // リビジョンをデプロイする
+	UpdateTrafficToLatestRevision(ctx context.Context) error                                // トラフィックを最新のリビジョンに更新する
+	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // トラフィックを指定されたリビジョンに更新する
+	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error       // トラフィックを含めてデプロイする
 }
 
 type gcloudCommand struct {

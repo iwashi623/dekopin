@@ -15,7 +15,12 @@ func RemoveTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("gcloud command not found")
 	}
 
-	tag, err := getTagName(cmd)
+	tag, err := getTagByFlag(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to get tag flag: %w", err)
+	}
+
+	tag, err = createRevisionTagName(ctx, tag)
 	if err != nil {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
