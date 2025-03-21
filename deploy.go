@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DEFAULT_REVISION = "LATEST"
+	DEPLOY_DEFAULT_REVISION = "LATEST"
 )
 
 var deployCmd = &cobra.Command{
@@ -91,7 +91,7 @@ func deploy(
 	}
 
 	if flags.CreateTag {
-		if err := gcloudCmd.CreateRevisionTag(ctx, newRevisionTag, DEFAULT_REVISION); err != nil {
+		if err := gcloudCmd.CreateRevisionTag(ctx, newRevisionTag, DEPLOY_DEFAULT_REVISION); err != nil {
 			return fmt.Errorf("failed to create revision tag: %w", err)
 		}
 	}

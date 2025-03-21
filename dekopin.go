@@ -73,7 +73,7 @@ func init() {
 
 	rootCmd.AddCommand(createTagCmd)
 	createTagCmd.Flags().StringP("tag", "t", "", "tag name")
-	createTagCmd.Flags().String("revision", "LATEST", "revision name(Default: LATEST)")
+	createTagCmd.Flags().String("revision", CREATE_TAG_DEFAULT_REVISION, "revision name(Default: LATEST)")
 
 	rootCmd.AddCommand(removeTagCmd)
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
@@ -87,7 +87,7 @@ func init() {
 	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags before deploy")
 
 	rootCmd.AddCommand(srDeployCmd)
-	srDeployCmd.Flags().String("revision", "LATEST", "revision name(Default: LATEST)")
+	srDeployCmd.Flags().String("revision", SWITCH_REVISION_DEFAULT_REVISION, "revision name(Default: LATEST)")
 
 	rootCmd.AddCommand(stDeployCmd)
 	stDeployCmd.Flags().StringP("tag", "t", "", "tag name")

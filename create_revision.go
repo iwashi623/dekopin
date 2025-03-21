@@ -32,17 +32,13 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 
 	commitHash := getCommitHash(opt.Runner)
 
-	return CreateRevisionExec(ctx, gcloudCmd, image, commitHash)
+	return createRevision(ctx, gcloudCmd, image, commitHash)
 }
 
-func CreateRevisionExec(ctx context.Context, gc GcloudCommand, image string, commitHash string) error {
-	fmt.Println("Starting to create a new Cloud Run revision...")
-
+func createRevision(ctx context.Context, gc GcloudCommand, image string, commitHash string) error {
 	if err := gc.CreateRevision(ctx, image, commitHash); err != nil {
 		return fmt.Errorf("failed to create revision: %w", err)
 	}
-
-	fmt.Println("New revision has been successfully created")
 
 	return nil
 }

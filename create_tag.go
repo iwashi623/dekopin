@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	CREATE_TAG_DEFAULT_REVISION = "LATEST"
+)
+
 var createTagCmd = &cobra.Command{
 	Use:     "create-tag",
 	Short:   "Assign a Revision tag to a Cloud Run revision",
@@ -55,8 +59,7 @@ func CreateTagCommand(cmd *cobra.Command, args []string) error {
 }
 
 func createTag(ctx context.Context, gc GcloudCommand, tag string, revisionName string) error {
-	if revisionName != DEFAULT_REVISION {
-		// revisionが存在するか確認する
+	if revisionName != CREATE_TAG_DEFAULT_REVISION {
 		_, err := gc.GetRevision(ctx, revisionName)
 		if err != nil {
 			return fmt.Errorf("failed to get revision: %w", err)
