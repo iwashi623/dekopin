@@ -42,9 +42,9 @@ type DeployCommandFlags struct {
 
 func DeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
-	if !ok {
-		return fmt.Errorf("gcloud command not found")
+	gcloudCmd, err := GetGcloudCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
 	flags, err := getDeployCommandFlags(cmd)

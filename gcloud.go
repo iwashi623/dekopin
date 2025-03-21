@@ -11,6 +11,20 @@ import (
 	"cloud.google.com/go/run/apiv2/runpb"
 )
 
+type gcloudCmdKey struct{}
+
+func SetGcloudCommand(ctx context.Context, gcloudCmd GcloudCommand) context.Context {
+	return context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
+}
+
+func GetGcloudCommand(ctx context.Context) (GcloudCommand, error) {
+	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
+	if !ok {
+		return nil, fmt.Errorf("gcloud command not found")
+	}
+	return gcloudCmd, nil
+}
+
 type GcloudCommand interface {
 	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // リビジョンを作成する
 	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // リビジョンにタグを付ける

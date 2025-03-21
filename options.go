@@ -7,8 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type cmdOptionKey struct{}
-
 type CmdOption struct {
 	Project string
 	Region  string
@@ -73,6 +71,12 @@ func (c *CmdOption) validate() error {
 	}
 
 	return nil
+}
+
+type cmdOptionKey struct{}
+
+func SetCmdOption(ctx context.Context, cmdOption *CmdOption) context.Context {
+	return context.WithValue(ctx, cmdOptionKey{}, cmdOption)
 }
 
 func GetCmdOption(ctx context.Context) (*CmdOption, error) {

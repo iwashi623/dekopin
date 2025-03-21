@@ -15,7 +15,10 @@ var srDeployCmd = &cobra.Command{
 
 func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gc := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
+	gc, err := GetGcloudCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get gcloud command: %w", err)
+	}
 
 	revision, err := cmd.Flags().GetString("revision")
 	if err != nil {

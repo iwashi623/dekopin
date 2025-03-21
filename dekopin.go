@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type gcloudCmdKey struct{}
-
 func Run(ctx context.Context) int {
 	sc, err := run.NewServicesClient(ctx)
 	if err != nil {
@@ -28,7 +26,7 @@ func Run(ctx context.Context) int {
 	defer rc.Close()
 
 	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, sc, rc)
-	ctx = context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
+	ctx = SetGcloudCommand(ctx, gcloudCmd)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
@@ -110,7 +108,7 @@ func prepareRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx = context.WithValue(ctx, cmdOptionKey{}, cmdOption)
+	ctx = SetCmdOption(ctx, cmdOption)
 	cmd.SetContext(ctx)
 	return nil
 }

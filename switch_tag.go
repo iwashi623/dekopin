@@ -33,9 +33,9 @@ func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
 
-	gc, ok := cmd.Context().Value(gcloudCmdKey{}).(GcloudCommand)
-	if !ok {
-		return fmt.Errorf("gcloud command not found")
+	gc, err := GetGcloudCommand(cmd.Context())
+	if err != nil {
+		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
 	return switchTagDeploy(cmd.Context(), gc, opt, rt)
