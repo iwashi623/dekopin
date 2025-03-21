@@ -57,7 +57,7 @@ func stDeployPreRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := validateTag(tag); err != nil {
+	if err := ValidateTag(tag); err != nil {
 		return err
 	}
 
@@ -123,19 +123,25 @@ const (
 	COMMIT_HASH_LENGTH = 7
 )
 
-func getCommitHash(runner string) string {
+func GetCommitHash(runner string) string {
 	if runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
-		if len(sha) < COMMIT_HASH_LENGTH {
+		if len(sha) == 0 {
 			return ""
+		}
+		if len(sha) <= COMMIT_HASH_LENGTH {
+			return sha
 		}
 		return sha[:COMMIT_HASH_LENGTH]
 	}
 
 	if runner == RUNNER_CLOUD_BUILD {
 		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
-		if len(sha) < COMMIT_HASH_LENGTH {
+		if len(sha) == 0 {
 			return ""
+		}
+		if len(sha) <= COMMIT_HASH_LENGTH {
+			return sha
 		}
 		return sha[:COMMIT_HASH_LENGTH]
 	}
@@ -143,7 +149,7 @@ func getCommitHash(runner string) string {
 	return ""
 }
 
-func getRunnerRef(ctx context.Context) (string, error) {
+func GetRunnerRef(ctx context.Context) (string, error) {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get cmdOption: %w", err)
@@ -160,7 +166,7 @@ func getRunnerRef(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("ref name is required")
 }
 
-func createRevisionTagName(ctx context.Context, tag string) (string, error) {
+func CreateRevisionTagName(ctx context.Context, tag string) (string, error) {
 	if tag != "" {
 		return tag, nil
 	}
@@ -174,7 +180,7 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 		return "", fmt.Errorf("local execution requires the tag flag")
 	}
 
-	ref, err := getRunnerRef(ctx)
+	ref, err := GetRunnerRef(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get runner ref: %w", err)
 	}
@@ -184,7 +190,7 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 	return "tag-" + reg.ReplaceAllString(ref, "-"), nil
 }
 
-func validateTag(tag string) error {
+func ValidateTag(tag string) error {
 	reg := regexp.MustCompile(`^[a-z0-9-]+$`)
 	if !reg.MatchString(tag) && tag != "" {
 		return fmt.Errorf("invalid tag name. Valid values: lowercase alphanumeric, numbers, hyphen")

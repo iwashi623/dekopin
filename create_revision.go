@@ -30,7 +30,7 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
 	}
 
-	commitHash := getCommitHash(opt.Runner)
+	commitHash := GetCommitHash(opt.Runner)
 
 	return createRevision(ctx, gcloudCmd, image, commitHash)
 }

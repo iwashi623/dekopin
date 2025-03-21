@@ -28,7 +28,7 @@ func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
-	rt, err := createRevisionTagName(ctx, tag)
+	rt, err := CreateRevisionTagName(ctx, tag)
 	if err != nil {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}

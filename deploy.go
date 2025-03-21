@@ -52,7 +52,7 @@ func DeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get deploy command flags: %w", err)
 	}
 
-	tag, err := createRevisionTagName(ctx, flags.Tag)
+	tag, err := CreateRevisionTagName(ctx, flags.Tag)
 	if err != nil {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
@@ -61,7 +61,7 @@ func DeployCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
 	}
-	commitHash := getCommitHash(opt.Runner)
+	commitHash := GetCommitHash(opt.Runner)
 
 	return deploy(ctx, gcloudCmd, flags, commitHash, tag)
 }

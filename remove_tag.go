@@ -21,7 +21,7 @@ func removeTagPreRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if tag != "" {
-		if err := validateTag(tag); err != nil {
+		if err := ValidateTag(tag); err != nil {
 			return err
 		}
 	}
@@ -41,7 +41,7 @@ func RemoveTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
-	tag, err = createRevisionTagName(ctx, tag)
+	tag, err = CreateRevisionTagName(ctx, tag)
 	if err != nil {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
