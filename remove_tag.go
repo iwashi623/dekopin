@@ -20,8 +20,10 @@ func removeTagPreRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := validateTag(tag); err != nil {
-		return err
+	if tag != "" {
+		if err := validateTag(tag); err != nil {
+			return err
+		}
 	}
 
 	return nil

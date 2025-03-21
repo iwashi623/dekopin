@@ -20,7 +20,7 @@ func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	revision, err := cmd.Flags().GetString("revision")
+	revision, err := getRevisionByFlag(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to get revision flag: %w", err)
 	}
@@ -29,6 +29,11 @@ func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 }
 
 func switchRevisionDeploy(ctx context.Context, gc GcloudCommand, revision string) error {
+	_, err := gc.GetRevision(ctx, revision)
+	if err != nil {
+		return fmt.Errorf("failed to get revision: %w", err)
+	}
+
 	if err := gc.UpdateTrafficToRevision(ctx, revision); err != nil {
 		return fmt.Errorf("failed to update traffic to latest revision: %w", err)
 	}

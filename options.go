@@ -14,8 +14,22 @@ type CmdOption struct {
 	Runner  string
 }
 
+type cmdOptionKey struct{}
+
+func SetCmdOption(ctx context.Context, cmdOption *CmdOption) context.Context {
+	return context.WithValue(ctx, cmdOptionKey{}, cmdOption)
+}
+
+func GetCmdOption(ctx context.Context) (*CmdOption, error) {
+	cmdOption, ok := ctx.Value(cmdOptionKey{}).(*CmdOption)
+	if !ok {
+		return nil, fmt.Errorf("cmdOption not found")
+	}
+	return cmdOption, nil
+}
+
 func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error) {
-	project, err := cmd.Flags().GetString("project")
+	project, err := getProjectByFlag(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project flag: %w", err)
 	}
@@ -23,7 +37,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		project = config.Project
 	}
 
-	region, err := cmd.Flags().GetString("region")
+	region, err := getRegionByFlag(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get region flag: %w", err)
 	}
@@ -31,7 +45,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		region = config.Region
 	}
 
-	service, err := cmd.Flags().GetString("service")
+	service, err := getServiceByFlag(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service flag: %w", err)
 	}
@@ -39,7 +53,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		service = config.Service
 	}
 
-	runner, err := cmd.Flags().GetString("runner")
+	runner, err := getRunnerByFlag(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get runner flag: %w", err)
 	}
@@ -71,18 +85,4 @@ func (c *CmdOption) validate() error {
 	}
 
 	return nil
-}
-
-type cmdOptionKey struct{}
-
-func SetCmdOption(ctx context.Context, cmdOption *CmdOption) context.Context {
-	return context.WithValue(ctx, cmdOptionKey{}, cmdOption)
-}
-
-func GetCmdOption(ctx context.Context) (*CmdOption, error) {
-	cmdOption, ok := ctx.Value(cmdOptionKey{}).(*CmdOption)
-	if !ok {
-		return nil, fmt.Errorf("cmdOption not found")
-	}
-	return cmdOption, nil
 }

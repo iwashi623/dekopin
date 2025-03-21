@@ -6,18 +6,27 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	run "cloud.google.com/go/run/apiv2"
 	"github.com/spf13/cobra"
 )
 
+const (
+	TIMEOUT = 30 * time.Second
+)
+
 func Run(ctx context.Context) int {
+	ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
+	defer cancel()
+
 	sc, err := run.NewServicesClient(ctx)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return 1
 	}
 	defer sc.Close()
+
 	rc, err := run.NewRevisionsClient(ctx)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -90,9 +99,6 @@ func setRootFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("region", "", "region")
 	rootCmd.PersistentFlags().String("service", "", "service name")
 	rootCmd.PersistentFlags().String("runner", "", "runner type")
-	rootCmd.RegisterFlagCompletionFunc("runner", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return []string{RUNNER_GITHUB_ACTIONS, RUNNER_CLOUD_BUILD, RUNNER_LOCAL}, cobra.ShellCompDirectiveDefault
-	})
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
 }
 
@@ -180,7 +186,7 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 
 func validateTag(tag string) error {
 	reg := regexp.MustCompile(`^[a-z0-9-]+$`)
-	if !reg.MatchString(tag) {
+	if !reg.MatchString(tag) && tag != "" {
 		return fmt.Errorf("invalid tag name. Valid values: lowercase alphanumeric, numbers, hyphen")
 	}
 	return nil

@@ -10,5 +10,6 @@ import (
 func main() {
 	ctx := context.Background()
 	exitCode := dekopin.Run(ctx)
+
 	os.Exit(exitCode)
 }
