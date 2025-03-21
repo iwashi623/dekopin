@@ -47,8 +47,8 @@ func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 }
 
 func switchTagDeploy(ctx context.Context, gc GcloudCommand, opt *CmdOption, tag string) error {
-	// タグが存在するか確認する
-	// gcp-goを使って確認する
+	// Check if the tag exists
+	// Using gcp-go to check
 	client, err := run.NewServicesClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create run client: %w", err)

@@ -26,7 +26,7 @@ func TestCreateRevisionTagName(t *testing.T) {
 	}
 
 	cases := map[string]TestCase[any, ArrangeResult, TestResult]{
-		"正常系_引数のtagが空文字でなければ、tagをそのまま返す": {
+		"success_if_tag_is_not_empty_returns_the_tag_as_is": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					ctx: context.Background(),
@@ -38,7 +38,7 @@ func TestCreateRevisionTagName(t *testing.T) {
 				assert.Equal(t, assertArgs.tag, result.Tag)
 			},
 		},
-		"正常系_引数のtagが空文字で、runnerがlocalでなければ、`tag-`から始まる文字列を返す": {
+		"success_if_tag_is_empty_and_runner_is_not_local_returns_string_starting_with_tag": {
 			Arrange: func() ArrangeResult {
 				opt := dekopin.CmdOption{
 					Runner: dekopin.RUNNER_GITHUB_ACTIONS,
@@ -55,7 +55,7 @@ func TestCreateRevisionTagName(t *testing.T) {
 				assert.Regexp(t, "^tag-.*", result.Tag)
 			},
 		},
-		"異常系_引数のtagが空文字で、runnerがlocalであれば、エラーを返す": {
+		"error_if_tag_is_empty_and_runner_is_local_returns_error": {
 			Arrange: func() ArrangeResult {
 				opt := dekopin.CmdOption{
 					Runner: dekopin.RUNNER_LOCAL,
@@ -97,7 +97,7 @@ func TestGetCommitHash(t *testing.T) {
 	}
 
 	cases := map[string]TestCase[any, ArrangeResult, TestResult]{
-		"正常系_GitHub Actions Runnerで有効なSHA(7文字より長い)": {
+		"success_github_actions_runner_with_valid_sha_longer_than_7_chars": {
 			Arrange: func() ArrangeResult {
 				hash := "abcdef1234567890"
 				t.Setenv(dekopin.ENV_GITHUB_SHA, hash)
@@ -112,7 +112,7 @@ func TestGetCommitHash(t *testing.T) {
 				assert.Equal(t, assertArgs.commitHash, result.CommitHash)
 			},
 		},
-		"正常系_Cloud Build Runnerで有効なSHA(7文字より長い)": {
+		"success_cloud_build_runner_with_valid_sha_longer_than_7_chars": {
 			Arrange: func() ArrangeResult {
 				hash := "1234567abcdef890"
 				t.Setenv(dekopin.ENV_CLOUD_BUILD_SHA, hash)
@@ -126,7 +126,7 @@ func TestGetCommitHash(t *testing.T) {
 				assert.Equal(t, assertArgs.commitHash, result.CommitHash)
 			},
 		},
-		"正常系_GitHub Actions Runnerで短いSHA(7文字以下)": {
+		"success_github_actions_runner_with_short_sha_less_than_or_equal_to_7_chars": {
 			Arrange: func() ArrangeResult {
 				hash := "abc123"
 				t.Setenv(dekopin.ENV_GITHUB_SHA, hash)
@@ -140,7 +140,7 @@ func TestGetCommitHash(t *testing.T) {
 				assert.Equal(t, assertArgs.commitHash, result.CommitHash)
 			},
 		},
-		"正常系_Cloud Build Runnerで短いSHA(7文字)": {
+		"success_cloud_build_runner_with_short_sha_exactly_7_chars": {
 			Arrange: func() ArrangeResult {
 				hash := "1234567"
 				t.Setenv(dekopin.ENV_CLOUD_BUILD_SHA, hash)
@@ -154,7 +154,7 @@ func TestGetCommitHash(t *testing.T) {
 				assert.Equal(t, assertArgs.commitHash, result.CommitHash)
 			},
 		},
-		"異常系_無効なRunner": {
+		"error_invalid_runner": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					runner: "invalid-runner",
@@ -164,9 +164,9 @@ func TestGetCommitHash(t *testing.T) {
 				assert.Equal(t, "", result.CommitHash)
 			},
 		},
-		"異常系_環境変数が設定されていない場合": {
+		"error_environment_variable_not_set": {
 			Arrange: func() ArrangeResult {
-				// 環境変数は設定しない
+				// Environment variable is not set
 				return ArrangeResult{
 					runner: dekopin.RUNNER_GITHUB_ACTIONS,
 					env:    map[string]string{dekopin.ENV_GITHUB_SHA: ""},
@@ -182,7 +182,7 @@ func TestGetCommitHash(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ar := c.Arrange()
 
-			// 環境変数を設定
+			// Set environment variables
 			for k, v := range ar.env {
 				t.Setenv(k, v)
 			}
@@ -192,7 +192,7 @@ func TestGetCommitHash(t *testing.T) {
 				CommitHash: result,
 			})
 
-			// 環境変数を削除
+			// Clean up environment variables
 			for k := range ar.env {
 				t.Setenv(k, "")
 			}
@@ -213,7 +213,7 @@ func TestGetRunnerRef(t *testing.T) {
 	}
 
 	cases := map[string]TestCase[any, ArrangeResult, TestResult]{
-		"正常系_GitHub Actions Runnerで有効なRef": {
+		"success_github_actions_runner_with_valid_ref": {
 			Arrange: func() ArrangeResult {
 				opt := dekopin.CmdOption{
 					Project: "test-project",
@@ -236,7 +236,7 @@ func TestGetRunnerRef(t *testing.T) {
 				assert.Equal(t, "refs/heads/main", result.Ref)
 			},
 		},
-		"正常系_Cloud Build Runnerで有効なRef": {
+		"success_cloud_build_runner_with_valid_ref": {
 			Arrange: func() ArrangeResult {
 				opt := dekopin.CmdOption{
 					Project: "test-project",
@@ -259,7 +259,7 @@ func TestGetRunnerRef(t *testing.T) {
 				assert.Equal(t, "main", result.Ref)
 			},
 		},
-		"異常系_Local Runnerではエラーを返す": {
+		"error_local_runner_returns_error": {
 			Arrange: func() ArrangeResult {
 				opt := dekopin.CmdOption{
 					Project: "test-project",
@@ -284,12 +284,12 @@ func TestGetRunnerRef(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ar := c.Arrange()
 
-			// 環境変数を削除
+			// Clean up environment variables
 			for k := range ar.env {
 				t.Setenv(k, "")
 			}
 
-			// 環境変数を設定
+			// Set environment variables
 			for k, v := range ar.env {
 				t.Setenv(k, v)
 			}
@@ -313,7 +313,7 @@ func TestValidateTag(t *testing.T) {
 	}
 
 	cases := map[string]TestCase[any, ArrangeResult, TestResult]{
-		"正常系_tagが空文字でない": {
+		"success_tag_is_not_empty": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					tag: "test",
@@ -323,7 +323,7 @@ func TestValidateTag(t *testing.T) {
 				assert.NoError(t, result.Err)
 			},
 		},
-		"正常系_tagが空文字の場合はエラーにならない": {
+		"success_empty_tag_does_not_cause_error": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					tag: "",
@@ -333,7 +333,7 @@ func TestValidateTag(t *testing.T) {
 				assert.NoError(t, result.Err)
 			},
 		},
-		"正常系_tagが小文字英数字とハイフンのみで構成されている": {
+		"success_tag_contains_only_lowercase_alphanumeric_and_hyphens": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					tag: "test-tag12345",
@@ -343,7 +343,7 @@ func TestValidateTag(t *testing.T) {
 				assert.NoError(t, result.Err)
 			},
 		},
-		"異常系_tagが小文字英数字とハイフンのみで構成されていない": {
+		"error_tag_contains_characters_other_than_lowercase_alphanumeric_and_hyphens": {
 			Arrange: func() ArrangeResult {
 				return ArrangeResult{
 					tag: "test.tag12345",

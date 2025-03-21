@@ -26,15 +26,15 @@ func GetGcloudCommand(ctx context.Context) (GcloudCommand, error) {
 }
 
 type GcloudCommand interface {
-	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // リビジョンを作成する
-	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // リビジョンにタグを付ける
-	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // リビジョンのタグを削除する
-	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error // リビジョンをデプロイする
-	UpdateTrafficToLatestRevision(ctx context.Context) error                                // トラフィックを最新のリビジョンに更新する
-	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // トラフィックを指定されたリビジョンに更新する
-	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error       // トラフィックを含めてデプロイする
-	GetActiveRevisionTags(ctx context.Context) ([]string, error)                            // アクティブなリビジョンタグを取得する
-	GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error)          // リビジョンを取得する
+	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // Create a revision
+	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // Assign a tag to a revision
+	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // Remove a tag from a revision
+	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error // Deploy a revision
+	UpdateTrafficToLatestRevision(ctx context.Context) error                                // Update traffic to the latest revision
+	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // Update traffic to the specified revision
+	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error       // Deploy with traffic
+	GetActiveRevisionTags(ctx context.Context) ([]string, error)                            // Get active revision tags
+	GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error)          // Get a revision
 }
 
 type gcloudCommand struct {

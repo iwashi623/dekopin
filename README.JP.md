@@ -9,6 +9,8 @@ Dekopinは、Google Cloud Runのデプロイ、リビジョン、トラフィッ
 - リビジョン間のトラフィック切り替え
 - 複数のデプロイ環境（ローカル、GitHub Actions、Cloud Build）のサポート
 - YAML形式の設定
+- 組み込みタイムアウト処理（デフォルト30秒）
+- コミットハッシュによる一貫したリビジョン命名
 
 ## インストール
 
@@ -46,6 +48,9 @@ dekopin remove-tag --tag v1.0.0
 
 # 特定のリビジョンにトラフィックを切り替える
 dekopin sr-deploy --revision service-abcdef
+
+# タグにトラフィックを切り替える
+dekopin st-deploy --tag v1.0.0
 ```
 
 ### グローバルフラグ
@@ -62,7 +67,7 @@ dekopin sr-deploy --revision service-abcdef
 
 ### GitHub Actions
 
-DekopinはGitHub Actions環境を自動的に検出し、タグ名やコミットハッシュに環境変数を使用できます。
+DekopinはGitHub Actions環境を自動的に検出し、タグ名やコミットハッシュに環境変数を使用できます。コミットハッシュの最初の7文字がリビジョン名に使用されます。
 
 ワークフロー例：
 
@@ -89,7 +94,7 @@ jobs:
 
 ### Google Cloud Build
 
-Dekopinはビルド環境変数を使用したCloud Build統合もサポートしています。
+Dekopinはビルド環境変数を使用したCloud Build統合もサポートしています。コミットハッシュが7文字以下の場合はそのまま使用され、それ以上の場合は最初の7文字が使用されます。
 
 `cloudbuild.yaml`の例：
 
@@ -109,6 +114,14 @@ steps:
     entrypoint: 'dekopin'
     args: ['deploy', '--image', 'gcr.io/$PROJECT_ID/image:$COMMIT_SHA']
 ```
+
+## バリデーション
+
+Dekopinには様々な入力値のバリデーションが含まれています：
+
+- タグは小文字の英数字とハイフンで構成される必要があります
+- コマンドには適切な必須フラグがあります
+- 入力値は実行前に検証されます
 
 ## ライセンス
 
