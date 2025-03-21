@@ -44,40 +44,17 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: prepareRun,
 }
 
-var createRevisionCmd = &cobra.Command{
-	Use:   "create-revision",
-	Short: "Create a new Cloud Run revision",
-	RunE:  CreateRevisionCommand,
-}
+func stDeployPreRun(cmd *cobra.Command, args []string) error {
+	tag, err := getTagByFlag(cmd)
+	if err != nil {
+		return err
+	}
 
-var createTagCmd = &cobra.Command{
-	Use:   "create-tag",
-	Short: "Assign a Revision tag to a Cloud Run revision",
-	RunE:  CreateTagCommand,
-}
+	if err := validateTag(tag); err != nil {
+		return err
+	}
 
-var removeTagCmd = &cobra.Command{
-	Use:   "remove-tag",
-	Short: "Remove a Revision tag from a Cloud Run revision",
-	RunE:  RemoveTagCommand,
-}
-
-var deployCmd = &cobra.Command{
-	Use:   "deploy",
-	Short: "Deploy new revision with image",
-	RunE:  DeployCommand,
-}
-
-var srDeployCmd = &cobra.Command{
-	Use:   "sr-deploy",
-	Short: "Switch Revision Deploy(Deploy new revision with revision name)",
-	RunE:  SwitchRevisionDeployCommand,
-}
-
-var stDeployCmd = &cobra.Command{
-	Use:   "st-deploy",
-	Short: "Switch Tag Deploy(Assign a Revision tag to a Cloud Run revision)",
-	RunE:  SwitchTagDeployCommand,
+	return nil
 }
 
 func init() {
@@ -89,15 +66,16 @@ func init() {
 
 	rootCmd.AddCommand(createTagCmd)
 	createTagCmd.Flags().StringP("tag", "t", "", "tag name")
-	createTagCmd.Flags().String("revision", "", "revision name")
+	createTagCmd.Flags().String("revision", "LATEST", "revision name(Default: LATEST)")
 
 	rootCmd.AddCommand(removeTagCmd)
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
+	removeTagCmd.MarkFlagRequired("tag")
 
 	rootCmd.AddCommand(deployCmd)
 	deployCmd.Flags().StringP("image", "i", "", "container image")
 	deployCmd.MarkFlagRequired("image")
-	deployCmd.Flags().StringP("tag", "t", "", "tag name")
+	deployCmd.Flags().StringP("tag", "t", "", "new revision tag name")
 	deployCmd.Flags().Bool("create-tag", false, "create a revision tag after deploy")
 	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags before deploy")
 
@@ -106,6 +84,7 @@ func init() {
 
 	rootCmd.AddCommand(stDeployCmd)
 	stDeployCmd.Flags().StringP("tag", "t", "", "tag name")
+	stDeployCmd.MarkFlagRequired("tag")
 }
 
 func setRootFlags(rootCmd *cobra.Command) {
@@ -113,24 +92,24 @@ func setRootFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().String("region", "", "region")
 	rootCmd.PersistentFlags().String("service", "", "service name")
 	rootCmd.PersistentFlags().String("runner", "", "runner type")
+	rootCmd.RegisterFlagCompletionFunc("runner", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{RUNNER_GITHUB_ACTIONS, RUNNER_CLOUD_BUILD, RUNNER_LOCAL}, cobra.ShellCompDirectiveDefault
+	})
 	rootCmd.PersistentFlags().StringP("file", "f", "dekopin.yml", "config file name")
 }
 
 func prepareRun(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	if err := validateRunnerFunc(cmd, args); err != nil {
-		return err
-	}
 
-	if err := setConfig(cmd); err != nil {
-		return err
-	}
-
-	cmdOption, err := NewCmdOption(&config, cmd)
+	config, err := getConfig(cmd)
 	if err != nil {
 		return err
 	}
 
+	cmdOption, err := NewCmdOption(config, cmd)
+	if err != nil {
+		return err
+	}
 	ctx = context.WithValue(ctx, cmdOptionKey{}, cmdOption)
 	cmd.SetContext(ctx)
 	return nil
@@ -201,30 +180,10 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 	return "tag-" + reg.ReplaceAllString(ref, "-"), nil
 }
 
-func createRevisionName(ctx context.Context, revision string) (string, error) {
-	if revision != "" {
-		return revision, nil
-	}
-
-	opt, err := GetCmdOption(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get cmdOption: %w", err)
-	}
-
-	if opt.Runner == RUNNER_LOCAL && revision == "" {
-		return "", fmt.Errorf("local execution requires the revision flag")
-	}
-
-	if prefix := getCommitHash(opt.Runner); prefix != "" {
-		return opt.Service + "-" + prefix, nil
-	}
-
-	return "", fmt.Errorf("failed to create revision name")
-}
-
-func validateRunner(runner string) error {
-	if !validRunners[runner] {
-		return fmt.Errorf("invalid runner type. Valid values: github-actions, cloud-build, local")
+func validateTag(tag string) error {
+	reg := regexp.MustCompile(`^[a-z0-9-]+$`)
+	if !reg.MatchString(tag) {
+		return fmt.Errorf("invalid tag name. Valid values: lowercase alphanumeric, numbers, hyphen")
 	}
 	return nil
 }

@@ -7,6 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var createRevisionCmd = &cobra.Command{
+	Use:   "create-revision",
+	Short: "Create a new Cloud Run revision",
+	RunE:  CreateRevisionCommand,
+}
+
 func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)

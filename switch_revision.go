@@ -7,6 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var srDeployCmd = &cobra.Command{
+	Use:   "sr-deploy",
+	Short: "Switch Revision Deploy(Deploy new revision with revision name)",
+	RunE:  SwitchRevisionDeployCommand,
+}
+
 func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gc := ctx.Value(gcloudCmdKey{}).(GcloudCommand)

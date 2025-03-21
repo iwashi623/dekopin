@@ -9,6 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var stDeployCmd = &cobra.Command{
+	Use:     "st-deploy",
+	Short:   "Switch Tag Deploy(Assign a Revision tag to a Cloud Run revision)",
+	PreRunE: stDeployPreRun,
+	RunE:    SwitchTagDeployCommand,
+}
+
 func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	opt, err := GetCmdOption(ctx)

@@ -8,36 +8,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var config DekopinConfig
-
-func setConfig(cmd *cobra.Command) error {
+func getConfig(cmd *cobra.Command) (*DekopinConfig, error) {
 	fileName, err := cmd.Flags().GetString("file")
 	if err != nil {
-		return fmt.Errorf("failed to get filename: %w", err)
+		return nil, fmt.Errorf("failed to get filename: %w", err)
 	}
 
 	dekopinYaml, err := os.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
+	var config *DekopinConfig
 	if err := yaml.Unmarshal(dekopinYaml, &config); err != nil {
-		return fmt.Errorf("failed to parse configuration file: %w", err)
+		return nil, fmt.Errorf("failed to parse configuration file: %w", err)
 	}
 
-	if err := config.validate(); err != nil {
-		return fmt.Errorf("failed to validate configuration: %w", err)
-	}
-
-	return nil
-}
-
-func (c *DekopinConfig) validate() error {
-	if err := validateRunner(c.Runner); err != nil {
-		return err
-	}
-
-	return nil
+	return config, nil
 }
 
 type DekopinConfig struct {
@@ -63,16 +50,4 @@ var validRunners = map[string]bool{
 	RUNNER_GITHUB_ACTIONS: true,
 	RUNNER_CLOUD_BUILD:    true,
 	RUNNER_LOCAL:          true,
-}
-
-func validateRunnerFunc(cmd *cobra.Command, args []string) error {
-	runner, _ := cmd.Flags().GetString("runner")
-	if runner == "" {
-		return nil
-	}
-
-	if err := validateRunner(runner); err != nil {
-		return err
-	}
-	return nil
 }

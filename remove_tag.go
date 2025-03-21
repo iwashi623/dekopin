@@ -7,6 +7,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var removeTagCmd = &cobra.Command{
+	Use:     "remove-tag",
+	Short:   "Remove a Revision tag from a Cloud Run revision",
+	PreRunE: removeTagPreRun,
+	RunE:    RemoveTagCommand,
+}
+
+func removeTagPreRun(cmd *cobra.Command, args []string) error {
+	tag, err := getTagByFlag(cmd)
+	if err != nil {
+		return err
+	}
+
+	if err := validateTag(tag); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func RemoveTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)

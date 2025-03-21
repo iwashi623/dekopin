@@ -8,8 +8,30 @@ import (
 )
 
 const (
-	DEPLOY_COMMAND_CREATE_TAG_REVISION = "LATEST"
+	DEFAULT_REVISION = "LATEST"
 )
+
+var deployCmd = &cobra.Command{
+	Use:     "deploy",
+	Short:   "Deploy new revision with image",
+	PreRunE: deployPreRun,
+	RunE:    DeployCommand,
+}
+
+func deployPreRun(cmd *cobra.Command, args []string) error {
+	tag, err := getTagByFlag(cmd)
+	if err != nil {
+		return err
+	}
+
+	if tag != "" {
+		if err := validateTag(tag); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 type DeployCommandFlags struct {
 	Image      string
@@ -74,8 +96,7 @@ func deploy(
 	}
 
 	if flags.CreateTag {
-		revisionName := DEPLOY_COMMAND_CREATE_TAG_REVISION
-		if err := gcloudCmd.CreateRevisionTag(ctx, newRevisionTag, revisionName); err != nil {
+		if err := gcloudCmd.CreateRevisionTag(ctx, newRevisionTag, DEFAULT_REVISION); err != nil {
 			return fmt.Errorf("failed to create revision tag: %w", err)
 		}
 	}
