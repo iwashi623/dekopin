@@ -31,3 +31,20 @@ func getRevisionByFlag(cmd *cobra.Command) (string, error) {
 
 	return rv, nil
 }
+
+func getCreateTagByFlag(cmd *cobra.Command) (bool, error) {
+	createTag, err := cmd.Flags().GetBool("create-tag")
+	if err != nil {
+		return false, fmt.Errorf("failed to get create-tag flag: %w", err)
+	}
+
+	return createTag, nil
+}
+
+func getRemoveTagByFlag(cmd *cobra.Command) (bool, error) {
+	removeTag, err := cmd.Flags().GetBool("remove-tags")
+	if err != nil {
+		return false, fmt.Errorf("failed to get remove-tags flag: %w", err)
+	}
+	return removeTag, nil
+}

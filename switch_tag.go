@@ -9,10 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	SERVICE_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s"
-)
-
 func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	opt, err := GetCmdOption(ctx)

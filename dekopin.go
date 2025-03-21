@@ -6,13 +6,20 @@ import (
 	"log"
 	"os"
 
+	run "cloud.google.com/go/run/apiv2"
 	"github.com/spf13/cobra"
 )
 
 type gcloudCmdKey struct{}
 
 func Run(ctx context.Context) int {
-	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr)
+	runClient, err := run.NewServicesClient(ctx)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return 1
+	}
+
+	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, runClient)
 	ctx = context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -82,6 +89,9 @@ func init() {
 	rootCmd.AddCommand(deployCmd)
 	deployCmd.Flags().StringP("image", "i", "", "container image")
 	deployCmd.MarkFlagRequired("image")
+	deployCmd.Flags().StringP("tag", "t", "", "tag name")
+	deployCmd.Flags().Bool("create-tag", false, "create a revision tag")
+	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags")
 
 	rootCmd.AddCommand(srDeployCmd)
 	srDeployCmd.Flags().String("revision", "LATEST", "revision name")
@@ -170,7 +180,7 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 	}
 
 	if tag == "" && opt.Runner == RUNNER_LOCAL {
-		return "", fmt.Errorf("tag flag is required")
+		return "", fmt.Errorf("local execution requires the tag flag")
 	}
 
 	return getRunnerRef(ctx)
@@ -187,7 +197,7 @@ func createRevisionName(ctx context.Context, revision string) (string, error) {
 	}
 
 	if opt.Runner == RUNNER_LOCAL && revision == "" {
-		return "", fmt.Errorf("revision flag is required")
+		return "", fmt.Errorf("local execution requires the revision flag")
 	}
 
 	if prefix := getCommitHash(opt.Runner); prefix != "" {
