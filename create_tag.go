@@ -19,9 +19,14 @@ var createTagCmd = &cobra.Command{
 }
 
 func createTagPreRun(cmd *cobra.Command, args []string) error {
-	tag, err := getTagByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(cmd.Context())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tag, err := dekopinCmd.GetTagByFlag()
+	if err != nil {
+		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
 	if tag != "" {
@@ -40,7 +45,12 @@ func CreateTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	tf, err := getTagByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tf, err := dekopinCmd.GetTagByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
@@ -50,7 +60,7 @@ func CreateTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
 
-	rf, err := getRevisionByFlag(cmd)
+	rf, err := dekopinCmd.GetRevisionByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get revision name: %w", err)
 	}

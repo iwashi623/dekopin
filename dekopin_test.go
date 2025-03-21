@@ -302,3 +302,66 @@ func TestGetRunnerRef(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTag(t *testing.T) {
+	type TestResult struct {
+		Err error
+	}
+
+	type ArrangeResult struct {
+		tag string
+	}
+
+	cases := map[string]TestCase[any, ArrangeResult, TestResult]{
+		"正常系_tagが空文字でない": {
+			Arrange: func() ArrangeResult {
+				return ArrangeResult{
+					tag: "test",
+				}
+			},
+			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
+				assert.NoError(t, result.Err)
+			},
+		},
+		"正常系_tagが空文字の場合はエラーにならない": {
+			Arrange: func() ArrangeResult {
+				return ArrangeResult{
+					tag: "",
+				}
+			},
+			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
+				assert.NoError(t, result.Err)
+			},
+		},
+		"正常系_tagが小文字英数字とハイフンのみで構成されている": {
+			Arrange: func() ArrangeResult {
+				return ArrangeResult{
+					tag: "test-tag12345",
+				}
+			},
+			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
+				assert.NoError(t, result.Err)
+			},
+		},
+		"異常系_tagが小文字英数字とハイフンのみで構成されていない": {
+			Arrange: func() ArrangeResult {
+				return ArrangeResult{
+					tag: "test.tag12345",
+				}
+			},
+			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
+				assert.Error(t, result.Err)
+			},
+		},
+	}
+
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			ar := c.Arrange()
+			err := dekopin.ValidateTag(ar.tag)
+			c.Assert(t, ar, TestResult{
+				Err: err,
+			})
+		})
+	}
+}

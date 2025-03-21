@@ -24,7 +24,12 @@ func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	revision, err := getRevisionByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	revision, err := dekopinCmd.GetRevisionByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get revision flag: %w", err)
 	}

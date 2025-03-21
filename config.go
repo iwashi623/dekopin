@@ -9,7 +9,12 @@ import (
 )
 
 func getConfig(cmd *cobra.Command) (*DekopinConfig, error) {
-	fileName, err := getFileByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(cmd.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	fileName, err := dekopinCmd.GetFileByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get filename: %w", err)
 	}

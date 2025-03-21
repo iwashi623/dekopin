@@ -19,13 +19,18 @@ var deployCmd = &cobra.Command{
 }
 
 func deployPreRun(cmd *cobra.Command, args []string) error {
-	tag, err := getTagByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(cmd.Context())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tag, err := dekopinCmd.GetTagByFlag()
+	if err != nil {
+		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
 	if tag != "" {
-		if err := validateTag(tag); err != nil {
+		if err := ValidateTag(tag); err != nil {
 			return err
 		}
 	}
@@ -100,22 +105,27 @@ func deploy(
 }
 
 func getDeployCommandFlags(cmd *cobra.Command) (*DeployCommandFlags, error) {
-	image, err := getImageByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(cmd.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	image, err := dekopinCmd.GetImageByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image flag: %w", err)
 	}
 
-	tag, err := getTagByFlag(cmd)
+	tag, err := dekopinCmd.GetTagByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
-	createTag, err := getCreateTagByFlag(cmd)
+	createTag, err := dekopinCmd.GetCreateTagByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get create-tag flag: %w", err)
 	}
 
-	removeTag, err := getRemoveTagByFlag(cmd)
+	removeTag, err := dekopinCmd.GetRemoveTagByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get remove-tags flag: %w", err)
 	}

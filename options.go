@@ -28,8 +28,13 @@ func GetCmdOption(ctx context.Context) (*CmdOption, error) {
 	return cmdOption, nil
 }
 
-func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error) {
-	project, err := getProjectByFlag(cmd)
+func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error) {
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	project, err := dekopinCmd.GetProjectByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project flag: %w", err)
 	}
@@ -37,7 +42,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		project = config.Project
 	}
 
-	region, err := getRegionByFlag(cmd)
+	region, err := dekopinCmd.GetRegionByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get region flag: %w", err)
 	}
@@ -45,7 +50,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		region = config.Region
 	}
 
-	service, err := getServiceByFlag(cmd)
+	service, err := dekopinCmd.GetServiceByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service flag: %w", err)
 	}
@@ -53,7 +58,7 @@ func NewCmdOption(config *DekopinConfig, cmd *cobra.Command) (*CmdOption, error)
 		service = config.Service
 	}
 
-	runner, err := getRunnerByFlag(cmd)
+	runner, err := dekopinCmd.GetRunnerByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get runner flag: %w", err)
 	}

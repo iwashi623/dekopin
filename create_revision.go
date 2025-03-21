@@ -20,7 +20,12 @@ func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	image, err := getImageByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	image, err := dekopinCmd.GetImageByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get image flag: %w", err)
 	}

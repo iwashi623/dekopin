@@ -1,53 +1,93 @@
 package dekopin
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
-func getFileByFlag(cmd *cobra.Command) (string, error) {
-	file, err := cmd.Flags().GetString("file")
+type dekopinCommandKey struct{}
+
+func SetDekopinCommand(ctx context.Context, cmd DekopinCommand) context.Context {
+	return context.WithValue(ctx, dekopinCommandKey{}, cmd)
+}
+
+func GetDekopinCommand(ctx context.Context) (DekopinCommand, error) {
+	cmd, ok := ctx.Value(dekopinCommandKey{}).(DekopinCommand)
+	if !ok {
+		return nil, fmt.Errorf("dekopin command not found")
+	}
+	return cmd, nil
+}
+
+type DekopinCommand interface {
+	GetFileByFlag() (string, error)
+	GetProjectByFlag() (string, error)
+	GetRegionByFlag() (string, error)
+	GetServiceByFlag() (string, error)
+	GetRunnerByFlag() (string, error)
+	GetImageByFlag() (string, error)
+	GetTagByFlag() (string, error)
+	GetRevisionByFlag() (string, error)
+	GetCreateTagByFlag() (bool, error)
+	GetRemoveTagByFlag() (bool, error)
+}
+
+type dekopinCommand struct {
+	cobra.Command
+}
+
+var _ DekopinCommand = &dekopinCommand{}
+
+func NewDekopinCommand(cmd *cobra.Command) DekopinCommand {
+	return &dekopinCommand{
+		Command: *cmd,
+	}
+}
+
+func (c *dekopinCommand) GetFileByFlag() (string, error) {
+	file, err := c.Flags().GetString("file")
 	if err != nil {
 		return "", fmt.Errorf("failed to get file flag: %w", err)
 	}
 	return file, nil
 }
 
-func getProjectByFlag(cmd *cobra.Command) (string, error) {
-	project, err := cmd.Flags().GetString("project")
+func (c *dekopinCommand) GetProjectByFlag() (string, error) {
+	project, err := c.Flags().GetString("project")
 	if err != nil {
 		return "", fmt.Errorf("failed to get project flag: %w", err)
 	}
 	return project, nil
 }
 
-func getRegionByFlag(cmd *cobra.Command) (string, error) {
-	region, err := cmd.Flags().GetString("region")
+func (c *dekopinCommand) GetRegionByFlag() (string, error) {
+	region, err := c.Flags().GetString("region")
 	if err != nil {
 		return "", fmt.Errorf("failed to get region flag: %w", err)
 	}
 	return region, nil
 }
 
-func getServiceByFlag(cmd *cobra.Command) (string, error) {
-	service, err := cmd.Flags().GetString("service")
+func (c *dekopinCommand) GetServiceByFlag() (string, error) {
+	service, err := c.Flags().GetString("service")
 	if err != nil {
 		return "", fmt.Errorf("failed to get service flag: %w", err)
 	}
 	return service, nil
 }
 
-func getRunnerByFlag(cmd *cobra.Command) (string, error) {
-	runner, err := cmd.Flags().GetString("runner")
+func (c *dekopinCommand) GetRunnerByFlag() (string, error) {
+	runner, err := c.Flags().GetString("runner")
 	if err != nil {
 		return "", fmt.Errorf("failed to get runner flag: %w", err)
 	}
 	return runner, nil
 }
 
-func getImageByFlag(cmd *cobra.Command) (string, error) {
-	image, err := cmd.Flags().GetString("image")
+func (c *dekopinCommand) GetImageByFlag() (string, error) {
+	image, err := c.Flags().GetString("image")
 	if err != nil {
 		return "", fmt.Errorf("failed to get image flag: %w", err)
 	}
@@ -55,16 +95,16 @@ func getImageByFlag(cmd *cobra.Command) (string, error) {
 	return image, nil
 }
 
-func getTagByFlag(cmd *cobra.Command) (string, error) {
-	tag, err := cmd.Flags().GetString("tag")
+func (c *dekopinCommand) GetTagByFlag() (string, error) {
+	tag, err := c.Flags().GetString("tag")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tag flag: %w", err)
 	}
 	return tag, nil
 }
 
-func getRevisionByFlag(cmd *cobra.Command) (string, error) {
-	rv, err := cmd.Flags().GetString("revision")
+func (c *dekopinCommand) GetRevisionByFlag() (string, error) {
+	rv, err := c.Flags().GetString("revision")
 	if err != nil {
 		return "", fmt.Errorf("failed to get revision flag: %w", err)
 	}
@@ -72,8 +112,8 @@ func getRevisionByFlag(cmd *cobra.Command) (string, error) {
 	return rv, nil
 }
 
-func getCreateTagByFlag(cmd *cobra.Command) (bool, error) {
-	createTag, err := cmd.Flags().GetBool("create-tag")
+func (c *dekopinCommand) GetCreateTagByFlag() (bool, error) {
+	createTag, err := c.Flags().GetBool("create-tag")
 	if err != nil {
 		return false, fmt.Errorf("failed to get create-tag flag: %w", err)
 	}
@@ -81,8 +121,8 @@ func getCreateTagByFlag(cmd *cobra.Command) (bool, error) {
 	return createTag, nil
 }
 
-func getRemoveTagByFlag(cmd *cobra.Command) (bool, error) {
-	removeTag, err := cmd.Flags().GetBool("remove-tags")
+func (c *dekopinCommand) GetRemoveTagByFlag() (bool, error) {
+	removeTag, err := c.Flags().GetBool("remove-tags")
 	if err != nil {
 		return false, fmt.Errorf("failed to get remove-tags flag: %w", err)
 	}

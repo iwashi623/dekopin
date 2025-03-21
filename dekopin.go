@@ -37,6 +37,9 @@ func Run(ctx context.Context) int {
 	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, sc, rc)
 	ctx = SetGcloudCommand(ctx, gcloudCmd)
 
+	dekopinCmd := NewDekopinCommand(rootCmd)
+	ctx = SetDekopinCommand(ctx, dekopinCmd)
+
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
 		return 1
@@ -52,9 +55,14 @@ var rootCmd = &cobra.Command{
 }
 
 func stDeployPreRun(cmd *cobra.Command, args []string) error {
-	tag, err := getTagByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(cmd.Context())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tag, err := dekopinCmd.GetTagByFlag()
+	if err != nil {
+		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
 
 	if err := ValidateTag(tag); err != nil {
@@ -110,7 +118,7 @@ func prepareRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	cmdOption, err := NewCmdOption(config, cmd)
+	cmdOption, err := NewCmdOption(ctx, config, cmd)
 	if err != nil {
 		return err
 	}

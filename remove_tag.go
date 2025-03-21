@@ -15,7 +15,13 @@ var removeTagCmd = &cobra.Command{
 }
 
 func removeTagPreRun(cmd *cobra.Command, args []string) error {
-	tag, err := getTagByFlag(cmd)
+	ctx := cmd.Context()
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tag, err := dekopinCmd.GetTagByFlag()
 	if err != nil {
 		return err
 	}
@@ -36,7 +42,12 @@ func RemoveTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	tag, err := getTagByFlag(cmd)
+	dekopinCmd, err := GetDekopinCommand(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dekopin command: %w", err)
+	}
+
+	tag, err := dekopinCmd.GetTagByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get tag flag: %w", err)
 	}
