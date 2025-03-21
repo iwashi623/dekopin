@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 
 	run "cloud.google.com/go/run/apiv2"
 	"github.com/spf13/cobra"
@@ -13,13 +14,20 @@ import (
 type gcloudCmdKey struct{}
 
 func Run(ctx context.Context) int {
-	runClient, err := run.NewServicesClient(ctx)
+	sc, err := run.NewServicesClient(ctx)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return 1
 	}
+	defer sc.Close()
+	rc, err := run.NewRevisionsClient(ctx)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return 1
+	}
+	defer rc.Close()
 
-	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, runClient)
+	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, sc, rc)
 	ctx = context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -90,11 +98,11 @@ func init() {
 	deployCmd.Flags().StringP("image", "i", "", "container image")
 	deployCmd.MarkFlagRequired("image")
 	deployCmd.Flags().StringP("tag", "t", "", "tag name")
-	deployCmd.Flags().Bool("create-tag", false, "create a revision tag")
-	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags")
+	deployCmd.Flags().Bool("create-tag", false, "create a revision tag after deploy")
+	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags before deploy")
 
 	rootCmd.AddCommand(srDeployCmd)
-	srDeployCmd.Flags().String("revision", "LATEST", "revision name")
+	srDeployCmd.Flags().String("revision", "LATEST", "revision name(Default: LATEST)")
 
 	rootCmd.AddCommand(stDeployCmd)
 	stDeployCmd.Flags().StringP("tag", "t", "", "tag name")
@@ -183,7 +191,14 @@ func createRevisionTagName(ctx context.Context, tag string) (string, error) {
 		return "", fmt.Errorf("local execution requires the tag flag")
 	}
 
-	return getRunnerRef(ctx)
+	ref, err := getRunnerRef(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get runner ref: %w", err)
+	}
+
+	reg := regexp.MustCompile(`[./: _]`)
+
+	return "tag-" + reg.ReplaceAllString(ref, "-"), nil
 }
 
 func createRevisionName(ctx context.Context, revision string) (string, error) {

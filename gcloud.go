@@ -20,10 +20,12 @@ type GcloudCommand interface {
 	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // トラフィックを指定されたリビジョンに更新する
 	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error       // トラフィックを含めてデプロイする
 	GetActiveRevisionTags(ctx context.Context) ([]string, error)                            // アクティブなリビジョンタグを取得する
+	GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error)          // リビジョンを取得する
 }
 
 type gcloudCommand struct {
-	Client *run.ServicesClient
+	ServicesClient  *run.ServicesClient
+	RevisionsClient *run.RevisionsClient
 
 	Stdout io.Writer
 	Stderr io.Writer
@@ -36,12 +38,30 @@ const (
 	REVISION_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s/revisions/%s"
 )
 
-func NewGcloudCommand(stdout io.Writer, stderr io.Writer, client *run.ServicesClient) GcloudCommand {
+func NewGcloudCommand(stdout io.Writer, stderr io.Writer, servicesClient *run.ServicesClient, revisionsClient *run.RevisionsClient) GcloudCommand {
 	return &gcloudCommand{
-		Client: client,
-		Stdout: stdout,
-		Stderr: stderr,
+		ServicesClient:  servicesClient,
+		RevisionsClient: revisionsClient,
+		Stdout:          stdout,
+		Stderr:          stderr,
 	}
+}
+
+func (c *gcloudCommand) GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error) {
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
+	fullRevisionName := fmt.Sprintf(REVISION_FULL_NAME_FORMAT, opt.Project, opt.Region, opt.Service, revisionName)
+	revision, err := c.RevisionsClient.GetRevision(ctx, &runpb.GetRevisionRequest{
+		Name: fullRevisionName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get revision: revisionName: %s is not found, error: %w", fullRevisionName, err)
+	}
+
+	return revision, nil
 }
 
 func (c *gcloudCommand) GetActiveRevisionTags(ctx context.Context) ([]string, error) {
@@ -51,7 +71,7 @@ func (c *gcloudCommand) GetActiveRevisionTags(ctx context.Context) ([]string, er
 		return nil, fmt.Errorf("failed to get cmdOption: %w", err)
 	}
 
-	service, err := c.Client.GetService(ctx, &runpb.GetServiceRequest{
+	service, err := c.ServicesClient.GetService(ctx, &runpb.GetServiceRequest{
 		Name: fmt.Sprintf(SERVICE_FULL_NAME_FORMAT, opt.Project, opt.Region, opt.Service),
 	})
 	if err != nil {

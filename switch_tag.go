@@ -35,8 +35,6 @@ func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 }
 
 func switchTagDeploy(ctx context.Context, gc GcloudCommand, opt *CmdOption, tag string) error {
-	// formattedTag := "tag-" + strings.ReplaceAll(tag, ".", "-")
-
 	// タグが存在するか確認する
 	// gcp-goを使って確認する
 	client, err := run.NewServicesClient(ctx)
