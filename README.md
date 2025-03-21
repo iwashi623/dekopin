@@ -41,16 +41,16 @@ dekopin deploy --image gcr.io/project/image:tag
 dekopin create-revision --image gcr.io/project/image:tag
 
 # Assign a tag to a revision
-dekopin create-tag --tag v1.0.0 --revision service-abcdef
+dekopin create-tag --tag v1-0-0 --revision service-abcdef
 
 # Remove a tag from a revision
-dekopin remove-tag --tag v1.0.0
+dekopin remove-tag --tag v1-0-0
 
 # Switch traffic to a specific revision
 dekopin sr-deploy --revision service-abcdef
 
 # Switch traffic to a tag
-dekopin st-deploy --tag v1.0.0
+dekopin st-deploy --tag v1-0-0
 ```
 
 ### Global Flags
@@ -119,7 +119,7 @@ steps:
 
 Dekopin includes validation for various input values:
 
-- Tags must consist of lowercase alphanumeric characters and hyphens
+- Tags must consist of lowercase alphanumeric characters and hyphens (e.g., `release-v1`, `v1-0-0`)
 - Commands have appropriate required flags
 - Input values are validated before execution
 

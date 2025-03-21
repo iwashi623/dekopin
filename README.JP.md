@@ -41,16 +41,16 @@ dekopin deploy --image gcr.io/project/image:tag
 dekopin create-revision --image gcr.io/project/image:tag
 
 # リビジョンにタグを割り当てる
-dekopin create-tag --tag v1.0.0 --revision service-abcdef
+dekopin create-tag --tag v1-0-0 --revision service-abcdef
 
 # リビジョンからタグを削除する
-dekopin remove-tag --tag v1.0.0
+dekopin remove-tag --tag v1-0-0
 
 # 特定のリビジョンにトラフィックを切り替える
 dekopin sr-deploy --revision service-abcdef
 
 # タグにトラフィックを切り替える
-dekopin st-deploy --tag v1.0.0
+dekopin st-deploy --tag v1-0-0
 ```
 
 ### グローバルフラグ
@@ -119,7 +119,7 @@ steps:
 
 Dekopinには様々な入力値のバリデーションが含まれています：
 
-- タグは小文字の英数字とハイフンで構成される必要があります
+- タグは小文字の英数字とハイフンで構成される必要があります（例：`release-v1`、`v1-0-0`）
 - コマンドには適切な必須フラグがあります
 - 入力値は実行前に検証されます
 
