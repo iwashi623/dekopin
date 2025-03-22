@@ -3,9 +3,8 @@ package dekopin
 import (
 	"context"
 	"fmt"
+	"slices"
 
-	run "cloud.google.com/go/run/apiv2"
-	runpb "cloud.google.com/go/run/apiv2/runpb"
 	"github.com/spf13/cobra"
 )
 
@@ -18,10 +17,6 @@ var stDeployCmd = &cobra.Command{
 
 func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	opt, err := GetCmdOption(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get cmdOption: %w", err)
-	}
 
 	dekopinCmd, err := GetDekopinCommand(ctx)
 	if err != nil {
@@ -43,28 +38,21 @@ func SwitchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	return switchTagDeploy(cmd.Context(), gc, opt, rt)
+	return switchTagDeploy(cmd.Context(), gc, rt)
 }
 
-func switchTagDeploy(ctx context.Context, gc GcloudCommand, opt *CmdOption, tag string) error {
-	// Check if the tag exists
-	// Using gcp-go to check
-	client, err := run.NewServicesClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create run client: %w", err)
-	}
-	defer client.Close()
-
-	fullServiceName := fmt.Sprintf(SERVICE_FULL_NAME_FORMAT, opt.Project, opt.Region, opt.Service)
-	services, err := client.GetService(ctx, &runpb.GetServiceRequest{
-		Name: fullServiceName,
-	})
+func switchTagDeploy(ctx context.Context, gc GcloudCommand, tag string) error {
+	tags, err := gc.GetActiveRevisionTags(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
 
-	for _, service := range services.TrafficStatuses {
-		fmt.Println("service: ", service)
+	if !slices.Contains(tags, tag) {
+		return fmt.Errorf("active tag %s not found", tag)
+	}
+
+	if err := gc.UpdateTrafficToRevisionTag(ctx, tag); err != nil {
+		return fmt.Errorf("failed to update traffic to revision tag: %w", err)
 	}
 
 	return nil

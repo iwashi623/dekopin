@@ -32,6 +32,7 @@ type GcloudCommand interface {
 	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error // Deploy a revision
 	UpdateTrafficToLatestRevision(ctx context.Context) error                                // Update traffic to the latest revision
 	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // Update traffic to the specified revision
+	UpdateTrafficToRevisionTag(ctx context.Context, tag string) error                       // Update traffic to the specified tag
 	DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error       // Deploy with traffic
 	GetActiveRevisionTags(ctx context.Context) ([]string, error)                            // Get active revision tags
 	GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error)          // Get a revision
@@ -194,6 +195,22 @@ func (c *gcloudCommand) UpdateTrafficToRevision(ctx context.Context, revisionNam
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to update traffic to revision: %w", err)
+	}
+
+	return nil
+}
+
+func (c *gcloudCommand) UpdateTrafficToRevisionTag(ctx context.Context, tag string) error {
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
+	cmd := updateTrafficCmd(ctx, opt.Service, opt.Region, opt.Project)
+	cmd.Args = append(cmd.Args, "--to-tags", tag+"=100")
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update traffic to revision tag: %w", err)
 	}
 
 	return nil
