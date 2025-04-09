@@ -31,29 +31,9 @@ runner: github-actions  # or: cloud-build, local
 
 ## Usage
 
-### Basic Commands
-
-```bash
-# Deploy a new revision with traffic
-dekopin deploy --image gcr.io/project/image:tag
-
-# Create a new revision without traffic
-dekopin create-revision --image gcr.io/project/image:tag
-
-# Assign a tag to a revision
-dekopin create-tag --tag v1-0-0 --revision service-abcdef
-
-# Remove a tag from a revision
-dekopin remove-tag --tag v1-0-0
-
-# Switch traffic to a specific revision
-dekopin sr-deploy --revision service-abcdef
-
-# Switch traffic to a tag
-dekopin st-deploy --tag v1-0-0
-```
-
 ### Global Flags
+
+The following flags can be used with any subcommand:
 
 ```
 --project    GCP project ID
@@ -61,6 +41,147 @@ dekopin st-deploy --tag v1-0-0
 --service    Cloud Run service name
 --runner     Runner type (github-actions, cloud-build, local)
 --file, -f   Path to configuration file (default: dekopin.yml)
+```
+
+### Tag Naming Rules
+
+Tags in Dekopin must follow these rules:
+
+- Must consist of only lowercase alphanumeric characters and hyphens (`a-z`, `0-9`, `-`)
+- Cannot contain uppercase letters, periods, underscores, spaces, or special characters
+- Empty tags are handled differently depending on the runner type:
+  - For GitHub Actions and Cloud Build: Automatically generates a tag based on the reference
+  - For local runner: Empty tags are not allowed and will result in an error
+
+Examples of valid tags:
+- `production`
+- `staging`
+- `release-v1`
+- `v1-0-0`
+- `feature-123`
+
+Examples of invalid tags:
+- `Production` (contains uppercase)
+- `staging.1` (contains period)
+- `test_tag` (contains underscore)
+- `tag with spaces` (contains spaces)
+
+### Subcommands
+
+#### deploy
+
+Deploy a new revision with traffic directed to it.
+
+```bash
+dekopin deploy --image [IMAGE_URL]
+```
+
+Options:
+- `--image, -i` (required): Container image URL (e.g., gcr.io/project/image:tag)
+- `--tag, -t`: Tag name for the new revision (must follow tag naming rules)
+- `--create-tag`: Create a revision tag after deployment
+- `--remove-tags`: Remove all revision tags before deployment
+
+Examples:
+```bash
+# Deploy with a specific image
+dekopin deploy --image gcr.io/project/image:latest
+
+# Deploy and create a tag
+dekopin deploy --image gcr.io/project/image:latest --create-tag --tag release-v1
+```
+
+#### create-revision
+
+Create a new revision without directing traffic to it.
+
+```bash
+dekopin create-revision --image [IMAGE_URL]
+```
+
+Options:
+- `--image, -i` (required): Container image URL
+
+Example:
+```bash
+# Create a new revision with no traffic
+dekopin create-revision --image gcr.io/project/image:v2
+```
+
+#### create-tag
+
+Assign a tag to an existing revision. The tag must follow the naming rules specified above.
+
+```bash
+dekopin create-tag --tag [TAG_NAME] --revision [REVISION_NAME]
+```
+
+Options:
+- `--tag, -t`: Tag name to create (must follow tag naming rules)
+- `--revision`: Revision name to tag (default is latest)
+
+Examples:
+```bash
+# Tag the latest revision
+dekopin create-tag --tag production
+
+# Tag a specific revision
+dekopin create-tag --tag staging --revision service-abcdef
+```
+
+#### remove-tag
+
+Remove a tag from a revision.
+
+```bash
+dekopin remove-tag --tag [TAG_NAME]
+```
+
+Options:
+- `--tag, -t` (required): Tag name to remove
+
+Example:
+```bash
+# Remove a tag
+dekopin remove-tag --tag old-release
+```
+
+#### sr-deploy (Switch Revision Deploy)
+
+Switch traffic to a specific revision.
+
+```bash
+dekopin sr-deploy --revision [REVISION_NAME]
+```
+
+Options:
+- `--revision`: Revision name to direct traffic to
+
+Example:
+```bash
+# Direct all traffic to a specific revision
+dekopin sr-deploy --revision service-abcdef
+```
+
+#### st-deploy (Switch Tag Deploy)
+
+Switch traffic to a revision with a specific tag. The tag must already exist and follow the tag naming rules.
+
+```bash
+dekopin st-deploy --tag [TAG_NAME]
+```
+
+Options:
+- `--tag, -t` (required): Tag name to direct traffic to
+- `--remove-tags`: Remove all revision tags except the deployment target revision tag
+
+Examples:
+```bash
+# Direct all traffic to the tagged revision
+dekopin st-deploy --tag production
+
+# Switch to tagged revision and clean up other tags
+dekopin st-deploy --tag production --remove-tags
 ```
 
 ## CI/CD Integration
@@ -122,6 +243,14 @@ Dekopin includes validation for various input values:
 - Tags must consist of lowercase alphanumeric characters and hyphens (e.g., `release-v1`, `v1-0-0`)
 - Commands have appropriate required flags
 - Input values are validated before execution
+
+## Troubleshooting
+
+### Common Errors
+
+- **Timeout Errors**: By default, Dekopin has a 30-second timeout. For long-running operations, consider increasing this value in your code.
+- **Connection Errors**: If you see "client connection is closing" errors, ensure that your client connections remain open during API calls.
+- **Tag Format Errors**: If you receive errors about invalid tag formats, ensure your tags follow the naming rules (lowercase alphanumeric and hyphens only).
 
 ## License
 
