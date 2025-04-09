@@ -20,6 +20,22 @@ func Run(ctx context.Context) int {
 	ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 
+	sc, err := run.NewServicesClient(ctx)
+	if err != nil {
+		log.Printf("ERROR: failed to create services client: %s", err)
+		return 1
+	}
+	defer sc.Close()
+
+	rc, err := run.NewRevisionsClient(ctx)
+	if err != nil {
+		log.Printf("ERROR: failed to create revisions client: %s", err)
+		return 1
+	}
+	defer rc.Close()
+
+	ctx = SetGcloudCommand(ctx, NewGcloudCommand(os.Stdout, os.Stderr, sc, rc))
+
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
 		return 1
@@ -43,7 +59,7 @@ func init() {
 
 	rootCmd.AddCommand(createTagCmd)
 	createTagCmd.Flags().StringP("tag", "t", "", "tag name")
-	createTagCmd.Flags().String("revision", CREATE_TAG_DEFAULT_REVISION, "revision name(Default: LATEST)")
+	createTagCmd.Flags().String("revision", CREATE_TAG_DEFAULT_REVISION, "revision name")
 
 	rootCmd.AddCommand(removeTagCmd)
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
@@ -57,11 +73,12 @@ func init() {
 	deployCmd.Flags().Bool("remove-tags", false, "remove all revision tags before deploy")
 
 	rootCmd.AddCommand(srDeployCmd)
-	srDeployCmd.Flags().String("revision", SWITCH_REVISION_DEFAULT_REVISION, "revision name(Default: LATEST)")
+	srDeployCmd.Flags().String("revision", SWITCH_REVISION_DEFAULT_REVISION, "revision name")
 
 	rootCmd.AddCommand(stDeployCmd)
 	stDeployCmd.Flags().StringP("tag", "t", "", "tag name")
 	stDeployCmd.MarkFlagRequired("tag")
+	stDeployCmd.Flags().Bool("remove-tags", false, "remove all revision tags except the deployment target revision tag")
 }
 
 func setRootFlags(rootCmd *cobra.Command) {
@@ -73,23 +90,8 @@ func setRootFlags(rootCmd *cobra.Command) {
 }
 
 func prepareAllRun(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
-
-	sc, err := run.NewServicesClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create services client: %w", err)
-	}
-	defer sc.Close()
-
-	rc, err := run.NewRevisionsClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create revisions client: %w", err)
-	}
-	defer rc.Close()
-
-	ctx = SetGcloudCommand(ctx, NewGcloudCommand(os.Stdout, os.Stderr, sc, rc))
-
-	ctx = SetDekopinCommand(ctx, NewDekopinCommand(cmd))
+	ctx := SetDekopinCommand(cmd.Context(), NewDekopinCommand(cmd))
+	cmd.SetContext(ctx)
 
 	config, err := getConfig(cmd)
 	if err != nil {

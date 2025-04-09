@@ -56,10 +56,15 @@ func switchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	return switchTagDeploy(cmd.Context(), gc, rt)
+	removeTags, err := dekopinCmd.GetRemoveTagByFlag()
+	if err != nil {
+		return fmt.Errorf("failed to get remove-tags flag: %w", err)
+	}
+
+	return switchTagDeploy(cmd.Context(), gc, rt, removeTags)
 }
 
-func switchTagDeploy(ctx context.Context, gc GcloudCommand, tag string) error {
+func switchTagDeploy(ctx context.Context, gc GcloudCommand, tag string, removeTags bool) error {
 	tags, err := gc.GetActiveRevisionTags(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
@@ -71,6 +76,17 @@ func switchTagDeploy(ctx context.Context, gc GcloudCommand, tag string) error {
 
 	if err := gc.UpdateTrafficToRevisionTag(ctx, tag); err != nil {
 		return fmt.Errorf("failed to update traffic to revision tag: %w", err)
+	}
+
+	if removeTags {
+		for _, t := range tags {
+			// Do not remove the specified tag
+			if t != tag {
+				if err := gc.RemoveRevisionTag(ctx, t); err != nil {
+					return fmt.Errorf("failed to remove revision tag: %w", err)
+				}
+			}
+		}
 	}
 
 	return nil
