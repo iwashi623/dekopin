@@ -11,7 +11,7 @@ var removeTagCmd = &cobra.Command{
 	Use:     "remove-tag",
 	Short:   "Remove a Revision tag from a Cloud Run revision",
 	PreRunE: removeTagPreRun,
-	RunE:    RemoveTagCommand,
+	RunE:    removeTagCommand,
 }
 
 func removeTagPreRun(cmd *cobra.Command, args []string) error {
@@ -35,7 +35,7 @@ func removeTagPreRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func RemoveTagCommand(cmd *cobra.Command, args []string) error {
+func removeTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, err := GetGcloudCommand(ctx)
 	if err != nil {

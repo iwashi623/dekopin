@@ -15,7 +15,7 @@ var createTagCmd = &cobra.Command{
 	Use:     "create-tag",
 	Short:   "Assign a Revision tag to a Cloud Run revision",
 	PreRunE: createTagPreRun,
-	RunE:    CreateTagCommand,
+	RunE:    createTagCommand,
 }
 
 func createTagPreRun(cmd *cobra.Command, args []string) error {
@@ -38,7 +38,7 @@ func createTagPreRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func CreateTagCommand(cmd *cobra.Command, args []string) error {
+func createTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, err := GetGcloudCommand(ctx)
 	if err != nil {

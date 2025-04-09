@@ -10,10 +10,10 @@ import (
 var createRevisionCmd = &cobra.Command{
 	Use:   "create-revision",
 	Short: "Create a new Cloud Run revision",
-	RunE:  CreateRevisionCommand,
+	RunE:  createRevisionCommand,
 }
 
-func CreateRevisionCommand(cmd *cobra.Command, args []string) error {
+func createRevisionCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, err := GetGcloudCommand(ctx)
 	if err != nil {

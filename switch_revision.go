@@ -14,10 +14,10 @@ const (
 var srDeployCmd = &cobra.Command{
 	Use:   "sr-deploy",
 	Short: "Switch Revision Deploy(Deploy new revision with revision name)",
-	RunE:  SwitchRevisionDeployCommand,
+	RunE:  switchRevisionDeployCommand,
 }
 
-func SwitchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
+func switchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gc, err := GetGcloudCommand(ctx)
 	if err != nil {

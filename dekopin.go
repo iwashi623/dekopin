@@ -54,24 +54,6 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: prepareAllRun,
 }
 
-func stDeployPreRun(cmd *cobra.Command, args []string) error {
-	dekopinCmd, err := GetDekopinCommand(cmd.Context())
-	if err != nil {
-		return fmt.Errorf("failed to get dekopin command: %w", err)
-	}
-
-	tag, err := dekopinCmd.GetTagByFlag()
-	if err != nil {
-		return fmt.Errorf("failed to get tag flag: %w", err)
-	}
-
-	if err := ValidateTag(tag); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func init() {
 	setRootFlags(rootCmd)
 
@@ -113,6 +95,22 @@ func setRootFlags(rootCmd *cobra.Command) {
 func prepareAllRun(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
+	sc, err := run.NewServicesClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create services client: %w", err)
+	}
+	defer sc.Close()
+
+	rc, err := run.NewRevisionsClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create revisions client: %w", err)
+	}
+	defer rc.Close()
+
+	ctx = SetGcloudCommand(ctx, NewGcloudCommand(os.Stdout, os.Stderr, sc, rc))
+
+	ctx = SetDekopinCommand(ctx, NewDekopinCommand(cmd))
+
 	config, err := getConfig(cmd)
 	if err != nil {
 		return err
@@ -122,6 +120,7 @@ func prepareAllRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	ctx = SetCmdOption(ctx, cmdOption)
 	cmd.SetContext(ctx)
 	return nil

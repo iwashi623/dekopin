@@ -15,7 +15,7 @@ var deployCmd = &cobra.Command{
 	Use:     "deploy",
 	Short:   "Deploy new revision with image",
 	PreRunE: deployPreRun,
-	RunE:    DeployCommand,
+	RunE:    deployCommand,
 }
 
 func deployPreRun(cmd *cobra.Command, args []string) error {
@@ -45,7 +45,7 @@ type DeployCommandFlags struct {
 	RemoveTags bool
 }
 
-func DeployCommand(cmd *cobra.Command, args []string) error {
+func deployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	gcloudCmd, err := GetGcloudCommand(ctx)
 	if err != nil {
