@@ -3,6 +3,7 @@ package dekopin
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/spf13/cobra"
 )
@@ -73,19 +74,19 @@ func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command
 		Runner:  runner,
 	}
 
-	if err := option.validate(); err != nil {
+	if err := option.Validate(); err != nil {
 		return nil, err
 	}
 
 	return option, nil
 }
 
-func (c *CmdOption) validate() error {
+func (c *CmdOption) Validate() error {
 	if c.Project == "" || c.Region == "" || c.Service == "" || c.Runner == "" {
 		return fmt.Errorf("project, region, service, and runner are required")
 	}
 
-	if !validRunners[c.Runner] {
+	if !slices.Contains(ValidRunners, c.Runner) {
 		return fmt.Errorf("invalid runner type. Valid values: github-actions, cloud-build, local")
 	}
 

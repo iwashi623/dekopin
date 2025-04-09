@@ -20,26 +20,6 @@ func Run(ctx context.Context) int {
 	ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 
-	sc, err := run.NewServicesClient(ctx)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return 1
-	}
-	defer sc.Close()
-
-	rc, err := run.NewRevisionsClient(ctx)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return 1
-	}
-	defer rc.Close()
-
-	gcloudCmd := NewGcloudCommand(os.Stdout, os.Stderr, sc, rc)
-	ctx = SetGcloudCommand(ctx, gcloudCmd)
-
-	dekopinCmd := NewDekopinCommand(rootCmd)
-	ctx = SetDekopinCommand(ctx, dekopinCmd)
-
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
 		return 1

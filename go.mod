@@ -6,6 +6,7 @@ toolchain go1.23.7
 
 require (
 	cloud.google.com/go/run v1.9.2
+	github.com/samber/lo v1.49.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v2 v2.4.0

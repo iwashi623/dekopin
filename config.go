@@ -51,8 +51,8 @@ const (
 	ENV_CLOUD_BUILD_SHA = "COMMIT_SHA"
 )
 
-var validRunners = map[string]bool{
-	RUNNER_GITHUB_ACTIONS: true,
-	RUNNER_CLOUD_BUILD:    true,
-	RUNNER_LOCAL:          true,
+var ValidRunners = []string{
+	RUNNER_GITHUB_ACTIONS,
+	RUNNER_CLOUD_BUILD,
+	RUNNER_LOCAL,
 }
