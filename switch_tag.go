@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ func switchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
 
-	removeTags, err := dekopinCmd.GetRemoveTagByFlag()
+	removeTags, err := dekopinCmd.GetRemoveTagsByFlag()
 	if err != nil {
 		return fmt.Errorf("failed to get remove-tags flag: %w", err)
 	}
@@ -79,13 +80,12 @@ func switchTagDeploy(ctx context.Context, gc GCloud, tag string, removeTags bool
 	}
 
 	if removeTags {
-		for _, t := range tags {
-			// Do not remove the specified tag
-			if t != tag {
-				if err := gc.RemoveRevisionTag(ctx, t); err != nil {
-					return fmt.Errorf("failed to remove revision tag: %w", err)
-				}
-			}
+		filteredTags := lo.Filter(tags, func(t string, _ int) bool {
+			return t != tag
+		})
+
+		if err := gc.RemoveRevisionTags(ctx, filteredTags); err != nil {
+			return fmt.Errorf("failed to remove revision tags: %w", err)
 		}
 	}
 

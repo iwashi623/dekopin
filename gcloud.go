@@ -29,6 +29,7 @@ type GCloud interface {
 	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // Create a revision
 	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // Assign a tag to a revision
 	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // Remove a tag from a revision
+	RemoveRevisionTags(ctx context.Context, revisionTags []string) error                    // Remove tags from a revision
 	Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error // Deploy a revision
 	UpdateTrafficToLatestRevision(ctx context.Context) error                                // Update traffic to the latest revision
 	UpdateTrafficToRevision(ctx context.Context, revisionName string) error                 // Update traffic to the specified revision
@@ -138,6 +139,16 @@ func (c *gcloud) RemoveRevisionTag(ctx context.Context, revisionTag string) erro
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to remove tag: %w", err)
+	}
+
+	return nil
+}
+
+func (c *gcloud) RemoveRevisionTags(ctx context.Context, revisionTags []string) error {
+	for _, tag := range revisionTags {
+		if err := c.RemoveRevisionTag(ctx, tag); err != nil {
+			return fmt.Errorf("failed to remove tag: %w", err)
+		}
 	}
 
 	return nil

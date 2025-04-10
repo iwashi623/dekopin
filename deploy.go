@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -78,19 +79,6 @@ func deploy(
 	commitHash string,
 	newRevisionTag string,
 ) error {
-	if flags.RemoveTags {
-		activeRevisionTags, err := gc.GetActiveRevisionTags(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get active revision tag: %w", err)
-		}
-
-		for _, activeRevisionTag := range activeRevisionTags {
-			if err := gc.RemoveRevisionTag(ctx, activeRevisionTag); err != nil {
-				return fmt.Errorf("failed to remove revision tag: %w", err)
-			}
-		}
-	}
-
 	if err := gc.DeployWithTraffic(ctx, flags.Image, commitHash); err != nil {
 		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}
@@ -98,6 +86,21 @@ func deploy(
 	if flags.CreateTag {
 		if err := gc.CreateRevisionTag(ctx, newRevisionTag, DEPLOY_DEFAULT_REVISION); err != nil {
 			return fmt.Errorf("failed to create revision tag: %w", err)
+		}
+	}
+
+	if flags.RemoveTags {
+		activeRevisionTags, err := gc.GetActiveRevisionTags(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get active revision tag: %w", err)
+		}
+
+		filteredTags := lo.Filter(activeRevisionTags, func(tag string, _ int) bool {
+			return tag != newRevisionTag
+		})
+
+		if err := gc.RemoveRevisionTags(ctx, filteredTags); err != nil {
+			return fmt.Errorf("failed to remove revision tags: %w", err)
 		}
 	}
 
@@ -125,7 +128,7 @@ func getDeployCommandFlags(cmd *cobra.Command) (*DeployCommandFlags, error) {
 		return nil, fmt.Errorf("failed to get create-tag flag: %w", err)
 	}
 
-	removeTag, err := dekopinCmd.GetRemoveTagByFlag()
+	removeTags, err := dekopinCmd.GetRemoveTagsByFlag()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get remove-tags flag: %w", err)
 	}
@@ -134,6 +137,6 @@ func getDeployCommandFlags(cmd *cobra.Command) (*DeployCommandFlags, error) {
 		Image:      image,
 		Tag:        tag,
 		CreateTag:  createTag,
-		RemoveTags: removeTag,
+		RemoveTags: removeTags,
 	}, nil
 }

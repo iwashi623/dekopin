@@ -31,7 +31,8 @@ type DekopinCommand interface {
 	GetTagByFlag() (string, error)
 	GetRevisionByFlag() (string, error)
 	GetCreateTagByFlag() (bool, error)
-	GetRemoveTagByFlag() (bool, error)
+	GetRemoveTagsByFlag() (bool, error)
+	GetUpdateTrafficByFlag() (bool, error)
 }
 
 type dekopinCommand struct {
@@ -121,10 +122,18 @@ func (c *dekopinCommand) GetCreateTagByFlag() (bool, error) {
 	return createTag, nil
 }
 
-func (c *dekopinCommand) GetRemoveTagByFlag() (bool, error) {
-	removeTag, err := c.Flags().GetBool("remove-tags")
+func (c *dekopinCommand) GetRemoveTagsByFlag() (bool, error) {
+	removeTags, err := c.Flags().GetBool("remove-tags")
 	if err != nil {
 		return false, fmt.Errorf("failed to get remove-tags flag: %w", err)
 	}
-	return removeTag, nil
+	return removeTags, nil
+}
+
+func (c *dekopinCommand) GetUpdateTrafficByFlag() (bool, error) {
+	updateTraffic, err := c.Flags().GetBool("update-traffic")
+	if err != nil {
+		return false, fmt.Errorf("failed to get update-traffic flag: %w", err)
+	}
+	return updateTraffic, nil
 }
