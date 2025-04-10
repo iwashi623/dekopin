@@ -88,10 +88,11 @@ func TestCreateRevisionTagName(t *testing.T) {
 func TestGetCommitHash(t *testing.T) {
 	type TestResult struct {
 		CommitHash string
+		Err        error
 	}
 
 	type ArrangeResult struct {
-		runner     string
+		ctx        context.Context
 		env        map[string]string
 		commitHash string
 	}
@@ -101,9 +102,13 @@ func TestGetCommitHash(t *testing.T) {
 			Arrange: func() ArrangeResult {
 				hash := "abcdef1234567890"
 				t.Setenv(dekopin.ENV_GITHUB_SHA, hash)
-				return ArrangeResult{
 
-					runner:     dekopin.RUNNER_GITHUB_ACTIONS,
+				opt := &dekopin.CmdOption{
+					Runner: dekopin.RUNNER_GITHUB_ACTIONS,
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
+				return ArrangeResult{
+					ctx:        ctx,
 					env:        map[string]string{dekopin.ENV_GITHUB_SHA: hash},
 					commitHash: hash[:dekopin.COMMIT_HASH_LENGTH],
 				}
@@ -116,8 +121,13 @@ func TestGetCommitHash(t *testing.T) {
 			Arrange: func() ArrangeResult {
 				hash := "1234567abcdef890"
 				t.Setenv(dekopin.ENV_CLOUD_BUILD_SHA, hash)
+
+				opt := &dekopin.CmdOption{
+					Runner: dekopin.RUNNER_CLOUD_BUILD,
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
 				return ArrangeResult{
-					runner:     dekopin.RUNNER_CLOUD_BUILD,
+					ctx:        ctx,
 					env:        map[string]string{dekopin.ENV_CLOUD_BUILD_SHA: hash},
 					commitHash: hash[:dekopin.COMMIT_HASH_LENGTH],
 				}
@@ -130,8 +140,13 @@ func TestGetCommitHash(t *testing.T) {
 			Arrange: func() ArrangeResult {
 				hash := "abc123"
 				t.Setenv(dekopin.ENV_GITHUB_SHA, hash)
+
+				opt := &dekopin.CmdOption{
+					Runner: dekopin.RUNNER_GITHUB_ACTIONS,
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
 				return ArrangeResult{
-					runner:     dekopin.RUNNER_GITHUB_ACTIONS,
+					ctx:        ctx,
 					env:        map[string]string{dekopin.ENV_GITHUB_SHA: hash},
 					commitHash: hash,
 				}
@@ -144,8 +159,13 @@ func TestGetCommitHash(t *testing.T) {
 			Arrange: func() ArrangeResult {
 				hash := "1234567"
 				t.Setenv(dekopin.ENV_CLOUD_BUILD_SHA, hash)
+
+				opt := &dekopin.CmdOption{
+					Runner: dekopin.RUNNER_CLOUD_BUILD,
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
 				return ArrangeResult{
-					runner:     dekopin.RUNNER_CLOUD_BUILD,
+					ctx:        ctx,
 					env:        map[string]string{dekopin.ENV_CLOUD_BUILD_SHA: hash},
 					commitHash: hash,
 				}
@@ -156,24 +176,33 @@ func TestGetCommitHash(t *testing.T) {
 		},
 		"error_invalid_runner": {
 			Arrange: func() ArrangeResult {
+				opt := &dekopin.CmdOption{
+					Runner: "invalid-runner",
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
 				return ArrangeResult{
-					runner: "invalid-runner",
+					ctx: ctx,
 				}
 			},
 			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
 				assert.Equal(t, "", result.CommitHash)
+				assert.Error(t, result.Err)
 			},
 		},
 		"error_environment_variable_not_set": {
 			Arrange: func() ArrangeResult {
-				// Environment variable is not set
+				opt := &dekopin.CmdOption{
+					Runner: dekopin.RUNNER_GITHUB_ACTIONS,
+				}
+				ctx := dekopin.SetCmdOption(context.Background(), opt)
 				return ArrangeResult{
-					runner: dekopin.RUNNER_GITHUB_ACTIONS,
-					env:    map[string]string{dekopin.ENV_GITHUB_SHA: ""},
+					ctx: ctx,
+					env: map[string]string{dekopin.ENV_GITHUB_SHA: ""},
 				}
 			},
 			Assert: func(t *testing.T, assertArgs ArrangeResult, result TestResult) {
 				assert.Equal(t, "", result.CommitHash)
+				assert.Error(t, result.Err)
 			},
 		},
 	}
@@ -187,9 +216,10 @@ func TestGetCommitHash(t *testing.T) {
 				t.Setenv(k, v)
 			}
 
-			result := dekopin.GetCommitHash(ar.runner)
+			result, err := dekopin.GetCommitHash(ar.ctx)
 			c.Assert(t, ar, TestResult{
 				CommitHash: result,
+				Err:        err,
 			})
 
 			// Clean up environment variables

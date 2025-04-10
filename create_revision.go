@@ -30,12 +30,10 @@ func createRevisionCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get image flag: %w", err)
 	}
 
-	opt, err := GetCmdOption(ctx)
+	commitHash, err := GetCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get cmdOption: %w", err)
+		return fmt.Errorf("failed to get commit hash: %w", err)
 	}
-
-	commitHash := GetCommitHash(opt.Runner)
 
 	return createRevision(ctx, gc, image, commitHash)
 }

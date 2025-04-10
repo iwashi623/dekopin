@@ -40,10 +40,10 @@ func deployPreRun(cmd *cobra.Command, args []string) error {
 }
 
 type DeployCommandFlags struct {
-	Image      string
-	Tag        string
-	CreateTag  bool
-	RemoveTags bool
+	Image            string
+	Tag              string
+	ShouldCreateTag  bool
+	ShouldRemoveTags bool
 }
 
 func deployCommand(cmd *cobra.Command, args []string) error {
@@ -58,18 +58,19 @@ func deployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get deploy command flags: %w", err)
 	}
 
-	tag, err := CreateRevisionTagName(ctx, flags.Tag)
-	if err != nil {
-		return fmt.Errorf("failed to get tag name: %w", err)
+	if flags.Tag == "" && flags.ShouldCreateTag {
+		flags.Tag, err = CreateRevisionTagName(ctx, flags.Tag)
+		if err != nil {
+			return fmt.Errorf("failed to get tag name: %w", err)
+		}
 	}
 
-	opt, err := GetCmdOption(ctx)
+	commitHash, err := GetCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get cmdOption: %w", err)
+		return fmt.Errorf("failed to get commit hash: %w", err)
 	}
-	commitHash := GetCommitHash(opt.Runner)
 
-	return deploy(ctx, gc, flags, commitHash, tag)
+	return deploy(ctx, gc, flags, commitHash)
 }
 
 func deploy(
@@ -77,26 +78,25 @@ func deploy(
 	gc GCloud,
 	flags *DeployCommandFlags,
 	commitHash string,
-	newRevisionTag string,
 ) error {
 	if err := gc.DeployWithTraffic(ctx, flags.Image, commitHash); err != nil {
 		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}
 
-	if flags.CreateTag {
-		if err := gc.CreateRevisionTag(ctx, newRevisionTag, DEPLOY_DEFAULT_REVISION); err != nil {
+	if flags.ShouldCreateTag {
+		if err := gc.CreateRevisionTag(ctx, flags.Tag, DEPLOY_DEFAULT_REVISION); err != nil {
 			return fmt.Errorf("failed to create revision tag: %w", err)
 		}
 	}
 
-	if flags.RemoveTags {
+	if flags.ShouldRemoveTags {
 		activeRevisionTags, err := gc.GetActiveRevisionTags(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get active revision tag: %w", err)
 		}
 
 		filteredTags := lo.Filter(activeRevisionTags, func(tag string, _ int) bool {
-			return tag != newRevisionTag
+			return tag != flags.Tag
 		})
 
 		if err := gc.RemoveRevisionTags(ctx, filteredTags); err != nil {
@@ -134,9 +134,9 @@ func getDeployCommandFlags(cmd *cobra.Command) (*DeployCommandFlags, error) {
 	}
 
 	return &DeployCommandFlags{
-		Image:      image,
-		Tag:        tag,
-		CreateTag:  createTag,
-		RemoveTags: removeTags,
+		Image:            image,
+		Tag:              tag,
+		ShouldCreateTag:  createTag,
+		ShouldRemoveTags: removeTags,
 	}, nil
 }

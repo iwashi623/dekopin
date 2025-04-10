@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	TIMEOUT = 30 * time.Second
+	TIMEOUT = 120 * time.Second
 )
 
 func Run(ctx context.Context) int {
@@ -123,30 +123,35 @@ const (
 	COMMIT_HASH_LENGTH = 7
 )
 
-func GetCommitHash(runner string) string {
-	if runner == RUNNER_GITHUB_ACTIONS {
+func GetCommitHash(ctx context.Context) (string, error) {
+	opt, err := GetCmdOption(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get cmdOption: %w", err)
+	}
+
+	if opt.Runner == RUNNER_GITHUB_ACTIONS {
 		sha := os.Getenv(ENV_GITHUB_SHA)
 		if len(sha) == 0 {
-			return ""
+			return "", fmt.Errorf("ref name is required")
 		}
 		if len(sha) <= COMMIT_HASH_LENGTH {
-			return sha
+			return sha, nil
 		}
-		return sha[:COMMIT_HASH_LENGTH]
+		return sha[:COMMIT_HASH_LENGTH], nil
 	}
 
-	if runner == RUNNER_CLOUD_BUILD {
+	if opt.Runner == RUNNER_CLOUD_BUILD {
 		sha := os.Getenv(ENV_CLOUD_BUILD_SHA)
 		if len(sha) == 0 {
-			return ""
+			return "", fmt.Errorf("ref name is required")
 		}
 		if len(sha) <= COMMIT_HASH_LENGTH {
-			return sha
+			return sha, nil
 		}
-		return sha[:COMMIT_HASH_LENGTH]
+		return sha[:COMMIT_HASH_LENGTH], nil
 	}
 
-	return ""
+	return "", fmt.Errorf("ref name is required")
 }
 
 func GetRunnerRef(ctx context.Context) (string, error) {

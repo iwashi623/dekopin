@@ -9,7 +9,7 @@ Dekopin is a command-line tool for managing Google Cloud Run deployments, revisi
 - Switch traffic between revisions
 - Support for multiple deployment environments (local, GitHub Actions, Cloud Build)
 - YAML configuration format
-- Built-in timeout handling (default 30 seconds)
+- Built-in timeout handling (default 120 seconds)
 - Consistent revision naming using commit hashes
 
 ## Installation
@@ -120,6 +120,8 @@ dekopin create-tag --tag [TAG_NAME] --revision [REVISION_NAME]
 Options:
 - `--tag, -t`: Tag name to create (must follow tag naming rules)
 - `--revision`: Revision name to tag (default is latest)
+- `--update-traffic`: Update traffic to the tagged revision after deployment
+- `--remove-tags`: Remove all existing revision tags before creating the new tag
 
 Examples:
 ```bash
@@ -128,6 +130,12 @@ dekopin create-tag --tag production
 
 # Tag a specific revision
 dekopin create-tag --tag staging --revision service-abcdef
+
+# Tag a revision and direct traffic to it
+dekopin create-tag --tag production --update-traffic
+
+# Create a tag, making it the only tag by removing other tags
+dekopin create-tag --tag production --remove-tags
 ```
 
 #### remove-tag
@@ -249,7 +257,7 @@ Dekopin includes validation for various input values:
 
 ### Common Errors
 
-- **Timeout Errors**: By default, Dekopin has a 30-second timeout. For long-running operations, consider increasing this value in your code.
+- **Timeout Errors**: By default, Dekopin has a 120-second timeout. For long-running operations, consider increasing this value in your code.
 - **Tag Format Errors**: If you receive errors about invalid tag formats, ensure your tags follow the naming rules (lowercase alphanumeric and hyphens only).
 
 ## License
