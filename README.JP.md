@@ -94,6 +94,7 @@ dekopin deploy --image gcr.io/project/image:latest --create-tag --tag release-v1
 #### create-revision
 
 トラフィックを向けずに新しいリビジョンを作成します。
+作成されるリビジョン名は、実行環境（runner）がGitHub ActionsまたはCloud Buildであればコミットハッシュの最初の7文字になります。
 
 ```bash
 dekopin create-revision --image [イメージURL]
@@ -249,7 +250,6 @@ Dekopinには様々な入力値のバリデーションが含まれています�
 ### 一般的なエラー
 
 - **タイムアウトエラー**：デフォルトでは、Dekopinのタイムアウトは30秒です。長時間実行される操作では、コード内でこの値を増やすことを検討してください。
-- **接続エラー**：「client connection is closing」などのエラーが表示される場合は、API呼び出し中にクライアント接続が開いたままになっていることを確認してください。
 - **タグフォーマットエラー**：無効なタグフォーマットに関するエラーが発生した場合は、タグが命名規則（小文字の英数字とハイフンのみ）に従っていることを確認してください。
 
 ## ライセンス

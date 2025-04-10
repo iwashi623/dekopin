@@ -94,6 +94,7 @@ dekopin deploy --image gcr.io/project/image:latest --create-tag --tag release-v1
 #### create-revision
 
 Create a new revision without directing traffic to it.
+If the runner is GitHub Actions or Cloud Build, the revision name will use the first 7 characters of the commit hash.
 
 ```bash
 dekopin create-revision --image [IMAGE_URL]
@@ -249,7 +250,6 @@ Dekopin includes validation for various input values:
 ### Common Errors
 
 - **Timeout Errors**: By default, Dekopin has a 30-second timeout. For long-running operations, consider increasing this value in your code.
-- **Connection Errors**: If you see "client connection is closing" errors, ensure that your client connections remain open during API calls.
 - **Tag Format Errors**: If you receive errors about invalid tag formats, ensure your tags follow the naming rules (lowercase alphanumeric and hyphens only).
 
 ## License
