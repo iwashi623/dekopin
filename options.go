@@ -39,7 +39,7 @@ func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project flag: %w", err)
 	}
-	if project == "" {
+	if project == "" && config != nil {
 		project = config.Project
 	}
 
@@ -47,7 +47,7 @@ func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command
 	if err != nil {
 		return nil, fmt.Errorf("failed to get region flag: %w", err)
 	}
-	if region == "" {
+	if region == "" && config != nil {
 		region = config.Region
 	}
 
@@ -55,7 +55,7 @@ func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service flag: %w", err)
 	}
-	if service == "" {
+	if service == "" && config != nil {
 		service = config.Service
 	}
 
@@ -63,7 +63,7 @@ func NewCmdOption(ctx context.Context, config *DekopinConfig, cmd *cobra.Command
 	if err != nil {
 		return nil, fmt.Errorf("failed to get runner flag: %w", err)
 	}
-	if runner == "" {
+	if runner == "" && config != nil {
 		runner = config.Runner
 	}
 

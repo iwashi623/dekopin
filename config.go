@@ -4,21 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
-func getConfig(cmd *cobra.Command) (*DekopinConfig, error) {
-	dekopinCmd, err := GetDekopinCommand(cmd.Context())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get dekopin command: %w", err)
-	}
-
-	fileName, err := dekopinCmd.GetFileByFlag()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get filename: %w", err)
-	}
-
+func getConfig(fileName string) (*DekopinConfig, error) {
 	dekopinYaml, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)

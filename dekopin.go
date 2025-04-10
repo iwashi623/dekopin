@@ -90,12 +90,21 @@ func setRootFlags(rootCmd *cobra.Command) {
 }
 
 func prepareAllRun(cmd *cobra.Command, args []string) error {
-	ctx := SetDekopinCommand(cmd.Context(), NewDekopinCommand(cmd))
+	dekopinCmd := NewDekopinCommand(cmd)
+	ctx := SetDekopinCommand(cmd.Context(), dekopinCmd)
 	cmd.SetContext(ctx)
 
-	config, err := getConfig(cmd)
+	var config *DekopinConfig
+	fileName, err := dekopinCmd.GetFileByFlag()
 	if err != nil {
 		return err
+	}
+
+	if fileName != "" {
+		config, err = getConfig(fileName)
+		if err != nil {
+			return err
+		}
 	}
 
 	cmdOption, err := NewCmdOption(ctx, config, cmd)
