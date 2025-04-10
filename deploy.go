@@ -2,6 +2,7 @@ package dekopin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
@@ -67,7 +68,9 @@ func deployCommand(cmd *cobra.Command, args []string) error {
 
 	commitHash, err := GetCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get commit hash: %w", err)
+		if !errors.Is(err, ErrGetCommitHashInLocal) {
+			return err
+		}
 	}
 
 	return deploy(ctx, gc, flags, commitHash)

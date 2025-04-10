@@ -2,6 +2,7 @@ package dekopin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -32,7 +33,9 @@ func createRevisionCommand(cmd *cobra.Command, args []string) error {
 
 	commitHash, err := GetCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get commit hash: %w", err)
+		if !errors.Is(err, ErrGetCommitHashInLocal) {
+			return err
+		}
 	}
 
 	return createRevision(ctx, gc, image, commitHash)

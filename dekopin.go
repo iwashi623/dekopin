@@ -151,7 +151,7 @@ func GetCommitHash(ctx context.Context) (string, error) {
 		return sha[:COMMIT_HASH_LENGTH], nil
 	}
 
-	return "", fmt.Errorf("ref name is required")
+	return "", ErrGetCommitHashInLocal
 }
 
 func GetRunnerRef(ctx context.Context) (string, error) {
