@@ -11,21 +11,21 @@ import (
 	"cloud.google.com/go/run/apiv2/runpb"
 )
 
-type gcloudCmdKey struct{}
+type gcloudKey struct{}
 
-func SetGcloudCommand(ctx context.Context, gcloudCmd GcloudCommand) context.Context {
-	return context.WithValue(ctx, gcloudCmdKey{}, gcloudCmd)
+func SetGcloud(ctx context.Context, gcloud Gcloud) context.Context {
+	return context.WithValue(ctx, gcloudKey{}, gcloud)
 }
 
-func GetGcloudCommand(ctx context.Context) (GcloudCommand, error) {
-	gcloudCmd, ok := ctx.Value(gcloudCmdKey{}).(GcloudCommand)
+func GetGcloud(ctx context.Context) (Gcloud, error) {
+	gc, ok := ctx.Value(gcloudKey{}).(Gcloud)
 	if !ok {
 		return nil, fmt.Errorf("gcloud command not found")
 	}
-	return gcloudCmd, nil
+	return gc, nil
 }
 
-type GcloudCommand interface {
+type Gcloud interface {
 	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // Create a revision
 	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // Assign a tag to a revision
 	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // Remove a tag from a revision
@@ -38,7 +38,7 @@ type GcloudCommand interface {
 	GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error)          // Get a revision
 }
 
-type gcloudCommand struct {
+type gcloud struct {
 	ServicesClient  *run.ServicesClient
 	RevisionsClient *run.RevisionsClient
 
@@ -46,15 +46,15 @@ type gcloudCommand struct {
 	Stderr io.Writer
 }
 
-var _ GcloudCommand = &gcloudCommand{}
+var _ Gcloud = &gcloud{}
 
 const (
 	SERVICE_FULL_NAME_FORMAT  = "projects/%s/locations/%s/services/%s"
 	REVISION_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s/revisions/%s"
 )
 
-func NewGcloudCommand(stdout io.Writer, stderr io.Writer, servicesClient *run.ServicesClient, revisionsClient *run.RevisionsClient) GcloudCommand {
-	return &gcloudCommand{
+func NewGcloud(stdout io.Writer, stderr io.Writer, servicesClient *run.ServicesClient, revisionsClient *run.RevisionsClient) Gcloud {
+	return &gcloud{
 		ServicesClient:  servicesClient,
 		RevisionsClient: revisionsClient,
 		Stdout:          stdout,
@@ -62,7 +62,7 @@ func NewGcloudCommand(stdout io.Writer, stderr io.Writer, servicesClient *run.Se
 	}
 }
 
-func (c *gcloudCommand) GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error) {
+func (c *gcloud) GetRevision(ctx context.Context, revisionName string) (*runpb.Revision, error) {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cmdOption: %w", err)
@@ -79,7 +79,7 @@ func (c *gcloudCommand) GetRevision(ctx context.Context, revisionName string) (*
 	return revision, nil
 }
 
-func (c *gcloudCommand) GetActiveRevisionTags(ctx context.Context) ([]string, error) {
+func (c *gcloud) GetActiveRevisionTags(ctx context.Context) ([]string, error) {
 	tagNames := []string{}
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
@@ -104,7 +104,7 @@ func (c *gcloudCommand) GetActiveRevisionTags(ctx context.Context) ([]string, er
 	return tagNames, nil
 }
 
-func (c *gcloudCommand) CreateRevision(ctx context.Context, imageName string, commitHash string) error {
+func (c *gcloud) CreateRevision(ctx context.Context, imageName string, commitHash string) error {
 	if err := c.Deploy(ctx, imageName, commitHash, false); err != nil {
 		return fmt.Errorf("failed to create revision: %w", err)
 	}
@@ -112,7 +112,7 @@ func (c *gcloudCommand) CreateRevision(ctx context.Context, imageName string, co
 	return nil
 }
 
-func (c *gcloudCommand) CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error {
+func (c *gcloud) CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -127,7 +127,7 @@ func (c *gcloudCommand) CreateRevisionTag(ctx context.Context, revisionTag strin
 	return nil
 }
 
-func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag string) error {
+func (c *gcloud) RemoveRevisionTag(ctx context.Context, revisionTag string) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -143,7 +143,7 @@ func (c *gcloudCommand) RemoveRevisionTag(ctx context.Context, revisionTag strin
 	return nil
 }
 
-func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error {
+func (c *gcloud) Deploy(ctx context.Context, imageName string, commitHash string, useTraffic bool) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -168,7 +168,7 @@ func (c *gcloudCommand) Deploy(ctx context.Context, imageName string, commitHash
 	return nil
 }
 
-func (c *gcloudCommand) UpdateTrafficToLatestRevision(ctx context.Context) error {
+func (c *gcloud) UpdateTrafficToLatestRevision(ctx context.Context) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -184,7 +184,7 @@ func (c *gcloudCommand) UpdateTrafficToLatestRevision(ctx context.Context) error
 	return nil
 }
 
-func (c *gcloudCommand) UpdateTrafficToRevision(ctx context.Context, revisionName string) error {
+func (c *gcloud) UpdateTrafficToRevision(ctx context.Context, revisionName string) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -200,7 +200,7 @@ func (c *gcloudCommand) UpdateTrafficToRevision(ctx context.Context, revisionNam
 	return nil
 }
 
-func (c *gcloudCommand) UpdateTrafficToRevisionTag(ctx context.Context, tag string) error {
+func (c *gcloud) UpdateTrafficToRevisionTag(ctx context.Context, tag string) error {
 	opt, err := GetCmdOption(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get cmdOption: %w", err)
@@ -216,7 +216,7 @@ func (c *gcloudCommand) UpdateTrafficToRevisionTag(ctx context.Context, tag stri
 	return nil
 }
 
-func (c *gcloudCommand) DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error {
+func (c *gcloud) DeployWithTraffic(ctx context.Context, imageName string, commitHash string) error {
 	if err := c.Deploy(ctx, imageName, commitHash, true); err != nil {
 		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}

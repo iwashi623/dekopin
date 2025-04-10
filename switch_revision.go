@@ -19,7 +19,7 @@ var srDeployCmd = &cobra.Command{
 
 func switchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gc, err := GetGcloudCommand(ctx)
+	gc, err := GetGcloud(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -37,7 +37,7 @@ func switchRevisionDeployCommand(cmd *cobra.Command, args []string) error {
 	return switchRevisionDeploy(ctx, gc, revision)
 }
 
-func switchRevisionDeploy(ctx context.Context, gc GcloudCommand, revision string) error {
+func switchRevisionDeploy(ctx context.Context, gc Gcloud, revision string) error {
 	if revision != SWITCH_REVISION_DEFAULT_REVISION {
 		_, err := gc.GetRevision(ctx, revision)
 		if err != nil {

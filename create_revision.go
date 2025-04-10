@@ -15,7 +15,7 @@ var createRevisionCmd = &cobra.Command{
 
 func createRevisionCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gcloudCmd, err := GetGcloudCommand(ctx)
+	gcloud, err := GetGcloud(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -37,10 +37,10 @@ func createRevisionCommand(cmd *cobra.Command, args []string) error {
 
 	commitHash := GetCommitHash(opt.Runner)
 
-	return createRevision(ctx, gcloudCmd, image, commitHash)
+	return createRevision(ctx, gcloud, image, commitHash)
 }
 
-func createRevision(ctx context.Context, gc GcloudCommand, image string, commitHash string) error {
+func createRevision(ctx context.Context, gc Gcloud, image string, commitHash string) error {
 	if err := gc.CreateRevision(ctx, image, commitHash); err != nil {
 		return fmt.Errorf("failed to create revision: %w", err)
 	}

@@ -34,7 +34,7 @@ func Run(ctx context.Context) int {
 	}
 	defer rc.Close()
 
-	ctx = SetGcloudCommand(ctx, NewGcloudCommand(os.Stdout, os.Stderr, sc, rc))
+	ctx = SetGcloud(ctx, NewGcloud(os.Stdout, os.Stderr, sc, rc))
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
@@ -60,6 +60,8 @@ func init() {
 	rootCmd.AddCommand(createTagCmd)
 	createTagCmd.Flags().StringP("tag", "t", "", "tag name")
 	createTagCmd.Flags().String("revision", CREATE_TAG_DEFAULT_REVISION, "revision name")
+	createTagCmd.Flags().Bool("update-traffic", false, "update traffic to the revision after deploy")
+	createTagCmd.Flags().Bool("remove-tags", false, "remove all revision tags before deploy")
 
 	rootCmd.AddCommand(removeTagCmd)
 	removeTagCmd.Flags().StringP("tag", "t", "", "tag name")
