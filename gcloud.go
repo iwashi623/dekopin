@@ -13,19 +13,19 @@ import (
 
 type gcloudKey struct{}
 
-func SetGcloud(ctx context.Context, gcloud Gcloud) context.Context {
+func SetGCloud(ctx context.Context, gcloud GCloud) context.Context {
 	return context.WithValue(ctx, gcloudKey{}, gcloud)
 }
 
-func GetGcloud(ctx context.Context) (Gcloud, error) {
-	gc, ok := ctx.Value(gcloudKey{}).(Gcloud)
+func GetGCloud(ctx context.Context) (GCloud, error) {
+	gc, ok := ctx.Value(gcloudKey{}).(GCloud)
 	if !ok {
 		return nil, fmt.Errorf("gcloud command not found")
 	}
 	return gc, nil
 }
 
-type Gcloud interface {
+type GCloud interface {
 	CreateRevision(ctx context.Context, imageName string, commitHash string) error          // Create a revision
 	CreateRevisionTag(ctx context.Context, revisionTag string, revisionName string) error   // Assign a tag to a revision
 	RemoveRevisionTag(ctx context.Context, revisionTag string) error                        // Remove a tag from a revision
@@ -46,14 +46,14 @@ type gcloud struct {
 	Stderr io.Writer
 }
 
-var _ Gcloud = &gcloud{}
+var _ GCloud = &gcloud{}
 
 const (
 	SERVICE_FULL_NAME_FORMAT  = "projects/%s/locations/%s/services/%s"
 	REVISION_FULL_NAME_FORMAT = "projects/%s/locations/%s/services/%s/revisions/%s"
 )
 
-func NewGcloud(stdout io.Writer, stderr io.Writer, servicesClient *run.ServicesClient, revisionsClient *run.RevisionsClient) Gcloud {
+func NewGCloud(stdout io.Writer, stderr io.Writer, servicesClient *run.ServicesClient, revisionsClient *run.RevisionsClient) GCloud {
 	return &gcloud{
 		ServicesClient:  servicesClient,
 		RevisionsClient: revisionsClient,

@@ -47,7 +47,7 @@ type DeployCommandFlags struct {
 
 func deployCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gcloud, err := GetGcloud(ctx)
+	gc, err := GetGCloud(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -68,35 +68,35 @@ func deployCommand(cmd *cobra.Command, args []string) error {
 	}
 	commitHash := GetCommitHash(opt.Runner)
 
-	return deploy(ctx, gcloud, flags, commitHash, tag)
+	return deploy(ctx, gc, flags, commitHash, tag)
 }
 
 func deploy(
 	ctx context.Context,
-	gcloud Gcloud,
+	gc GCloud,
 	flags *DeployCommandFlags,
 	commitHash string,
 	newRevisionTag string,
 ) error {
 	if flags.RemoveTags {
-		activeRevisionTags, err := gcloud.GetActiveRevisionTags(ctx)
+		activeRevisionTags, err := gc.GetActiveRevisionTags(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get active revision tag: %w", err)
 		}
 
 		for _, activeRevisionTag := range activeRevisionTags {
-			if err := gcloud.RemoveRevisionTag(ctx, activeRevisionTag); err != nil {
+			if err := gc.RemoveRevisionTag(ctx, activeRevisionTag); err != nil {
 				return fmt.Errorf("failed to remove revision tag: %w", err)
 			}
 		}
 	}
 
-	if err := gcloud.DeployWithTraffic(ctx, flags.Image, commitHash); err != nil {
+	if err := gc.DeployWithTraffic(ctx, flags.Image, commitHash); err != nil {
 		return fmt.Errorf("failed to deploy to Cloud Run: %w", err)
 	}
 
 	if flags.CreateTag {
-		if err := gcloud.CreateRevisionTag(ctx, newRevisionTag, DEPLOY_DEFAULT_REVISION); err != nil {
+		if err := gc.CreateRevisionTag(ctx, newRevisionTag, DEPLOY_DEFAULT_REVISION); err != nil {
 			return fmt.Errorf("failed to create revision tag: %w", err)
 		}
 	}

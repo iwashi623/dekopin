@@ -37,7 +37,7 @@ func removeTagPreRun(cmd *cobra.Command, args []string) error {
 
 func removeTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gcloud, err := GetGcloud(ctx)
+	gc, err := GetGCloud(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -57,9 +57,9 @@ func removeTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
 
-	return removeTag(ctx, gcloud, tag)
+	return removeTag(ctx, gc, tag)
 }
 
-func removeTag(ctx context.Context, gc Gcloud, tag string) error {
+func removeTag(ctx context.Context, gc GCloud, tag string) error {
 	return gc.RemoveRevisionTag(ctx, tag)
 }

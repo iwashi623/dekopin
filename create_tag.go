@@ -40,7 +40,7 @@ func createTagPreRun(cmd *cobra.Command, args []string) error {
 
 func createTagCommand(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	gcloud, err := GetGcloud(ctx)
+	gc, err := GetGCloud(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -65,10 +65,10 @@ func createTagCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get revision name: %w", err)
 	}
 
-	return createTag(ctx, gcloud, tag, rf)
+	return createTag(ctx, gc, tag, rf)
 }
 
-func createTag(ctx context.Context, gc Gcloud, tag string, revisionName string) error {
+func createTag(ctx context.Context, gc GCloud, tag string, revisionName string) error {
 	if revisionName != CREATE_TAG_DEFAULT_REVISION {
 		_, err := gc.GetRevision(ctx, revisionName)
 		if err != nil {

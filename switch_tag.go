@@ -51,7 +51,7 @@ func switchTagDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get tag name: %w", err)
 	}
 
-	gc, err := GetGcloud(cmd.Context())
+	gc, err := GetGCloud(cmd.Context())
 	if err != nil {
 		return fmt.Errorf("failed to get gcloud command: %w", err)
 	}
@@ -64,7 +64,7 @@ func switchTagDeployCommand(cmd *cobra.Command, args []string) error {
 	return switchTagDeploy(cmd.Context(), gc, rt, removeTags)
 }
 
-func switchTagDeploy(ctx context.Context, gc Gcloud, tag string, removeTags bool) error {
+func switchTagDeploy(ctx context.Context, gc GCloud, tag string, removeTags bool) error {
 	tags, err := gc.GetActiveRevisionTags(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)

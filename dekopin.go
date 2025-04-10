@@ -34,7 +34,7 @@ func Run(ctx context.Context) int {
 	}
 	defer rc.Close()
 
-	ctx = SetGcloud(ctx, NewGcloud(os.Stdout, os.Stderr, sc, rc))
+	ctx = SetGCloud(ctx, NewGCloud(os.Stdout, os.Stderr, sc, rc))
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Printf("ERROR: %s", err)
