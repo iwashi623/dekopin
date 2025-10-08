@@ -2,7 +2,7 @@ module github.com/iwashi623/dekopin
 
 go 1.23.0
 
-toolchain go1.25.1
+toolchain go1.25.2
 
 require (
 	cloud.google.com/go/run v1.12.0
